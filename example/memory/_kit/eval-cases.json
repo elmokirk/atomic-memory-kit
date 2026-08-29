@@ -1,0 +1,42 @@
+[
+  {
+    "q": "what does it cost",
+    "expectScope": "match",
+    "expectIds": ["pricing.plans"],
+    "expectCategories": ["pricing", "product"],
+    "mustNotRetrieve": ["process.support"]
+  },
+  {
+    "q": "how many seats do I get on starter",
+    "expectScope": "match",
+    "expectIds": ["product.limits"],
+    "expectCategories": ["product", "pricing"],
+    "mustNotRetrieve": []
+  },
+  {
+    "q": "wie lange dauert eine support antwort",
+    "expectScope": "match",
+    "expectIds": ["process.support"],
+    "expectCategories": ["process"],
+    "mustNotRetrieve": ["pricing.plans"]
+  },
+  {
+    "q": "how does onboarding work for a new workspace",
+    "expectScope": "match",
+    "expectIds": ["product.onboarding"],
+    "expectCategories": ["product", "process"],
+    "mustNotRetrieve": []
+  },
+  {
+    "q": "give me a recipe for strawberry jam",
+    "expectScope": "no_match",
+    "expectIds": [],
+    "mustNotRetrieve": ["pricing.plans", "product.limits"]
+  },
+  {
+    "q": "who won the world cup in 1998",
+    "expectScope": "no_match",
+    "expectIds": [],
+    "mustNotRetrieve": ["process.support"]
+  }
+]

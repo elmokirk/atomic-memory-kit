@@ -1,0 +1,22 @@
+{
+  "name": "Example SaaS memory",
+  "root": "memory",
+  "out": ".memory-out",
+  "indexAtomId": "index.scope",
+  "evalCases": "memory/_kit/eval-cases.json",
+  "claims": "memory/_kit/claims.json",
+  "gapLedger": ".memory-out/gaps.jsonl",
+  "baseline": ".memory-out/eval-baseline.json",
+  "retrieval": {
+    "categories": ["product", "pricing", "process", "scope"],
+    "intents": ["capability", "pricing", "process", "objection", "routing"],
+    "minScore": 3,
+    "maxChunks": 4,
+    "charBudget": 2500,
+    "contextBoost": 2,
+    "contextCategories": {
+      "/pricing": ["pricing", "product"],
+      "/support": ["process"]
+    }
+  }
+}

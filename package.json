@@ -1,0 +1,52 @@
+{
+  "name": "atomic-memory-kit",
+  "version": "0.1.0",
+  "description": "Bidirectional atomic memory for agents: compile a Markdown knowledge graph into one context bundle, decompile it back into atoms, and spotlight what is missing.",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.6.0"
+  },
+  "bin": {
+    "amk": "./cli/amk.mjs"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./adapters/fs": "./adapters/fs.ts"
+  },
+  "files": [
+    "src",
+    "adapters",
+    "cli",
+    "agent",
+    "docs",
+    "CONCEPT.md",
+    "CONTRACT.md",
+    "LIMITATIONS.md"
+  ],
+  "scripts": {
+    "validate": "node cli/amk.mjs validate",
+    "compile": "node cli/amk.mjs compile",
+    "decompile": "node cli/amk.mjs decompile",
+    "index": "node cli/amk.mjs index",
+    "eval": "node cli/amk.mjs eval",
+    "gaps": "node cli/amk.mjs gaps",
+    "drift": "node cli/amk.mjs drift",
+    "test": "node --test \"tests/*.test.ts\"",
+    "check": "node cli/amk.mjs validate && node cli/amk.mjs eval && npm run test"
+  },
+  "keywords": [
+    "agent-memory",
+    "knowledge-management",
+    "second-brain",
+    "markdown",
+    "rag",
+    "retrieval",
+    "knowledge-graph",
+    "gap-analysis",
+    "claude-code",
+    "mcp"
+  ],
+  "dependencies": {},
+  "devDependencies": {}
+}

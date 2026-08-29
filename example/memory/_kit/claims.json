@@ -1,0 +1,26 @@
+[
+  {
+    "key": "website:pricing.starterPrice",
+    "value": "49 EUR / month",
+    "atomId": "pricing.plans",
+    "claimType": "price"
+  },
+  {
+    "key": "website:pricing.growthPrice",
+    "value": "199 EUR / month",
+    "atomId": "pricing.plans",
+    "claimType": "price"
+  },
+  {
+    "key": "website:limits.starterSeats",
+    "value": "5 seats included",
+    "atomId": "product.limits",
+    "claimType": "number"
+  },
+  {
+    "key": "website:support.sla",
+    "value": "We answer within 12 business hours",
+    "atomId": "process.support",
+    "claimType": "duration"
+  }
+]
