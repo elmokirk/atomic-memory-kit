@@ -1,10 +1,41 @@
 # Changelog
 
-Kit version is independent of the contract version. A breaking change to a core
-frontmatter field or to parser grammar is a **contract** major bump with a
-migration note here.
+All notable changes to this project will be documented in this file.
 
-## 0.2.0 — 2026-08-29
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+> **Kit vs Contract versioning:** Kit version (`package.json`) tracks the engine/tooling.
+> Contract version (`src/contract.ts`, `CONTRACT.md`) tracks the frontmatter grammar.
+> A breaking change to a core field or parser grammar is a **contract major** bump
+> with a migration note here. Contract `1.0.0` was `v1` — same atoms, formalised.
+
+## How to update this file (for contributors / agents)
+
+1. Add your entry under `## [Unreleased]` in the right subsection (`Added` / `Changed` / `Fixed` / `Removed`).
+2. Keep one bullet per user-visible change. Link the PR/issue if you have one.
+3. On release: rename `## [Unreleased]` to `## [x.y.z] - YYYY-MM-DD`, create a new empty
+   `## [Unreleased]` at the top, update the link refs at the bottom, bump `package.json`.
+
+Subsections to use: `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `Security`.
+
+---
+
+## [Unreleased]
+
+### Added
+
+- _Nothing yet._
+
+### Changed
+
+- _Nothing yet._
+
+### Fixed
+
+- _Nothing yet._
+
+## [0.2.0] - 2026-08-29
 
 Contract **1.0.0** (now semver, was `v1`). No atom valid under `v1` becomes
 invalid: this is a formalisation, not a break.
@@ -65,7 +96,7 @@ invalid: this is a formalisation, not a break.
 radius, version negotiation, restructure planning and materialization, and MCP
 conformance including a full MRTR round trip across two cold processes.
 
-## 0.1.0 — 2026-08-29
+## [0.1.0] - 2026-08-29
 
 Initial extraction. Contract **v1**, bundle format **v1**.
 
@@ -119,3 +150,9 @@ Initial extraction. Contract **v1**, bundle format **v1**.
 
 No embeddings, no LLM code, no multi-tenancy, no access control, no automatic
 knowledge extraction, no keyword generation. See `LIMITATIONS.md`.
+
+---
+
+[Unreleased]: https://github.com/elmokirk/atomic-memory-kit/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/elmokirk/atomic-memory-kit/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/elmokirk/atomic-memory-kit/releases/tag/v0.1.0
