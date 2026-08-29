@@ -128,7 +128,7 @@ function persistLedger(ledger) {
 function refreshStructuralGaps(ledger) {
   const { base, warnings } = load({ quiet: true })
   for (const observation of findTodoMarkers(base.atoms)) ledger.observe(observation)
-  for (const warning of warnings.filter((entry) => entry.message.startsWith('related[] cycle'))) {
+  for (const warning of warnings.filter((entry) => entry.code === 'W_CYCLE')) {
     ledger.observe({ kind: 'cycle', topic: warning.message, atomId: warning.path, source: 'amk gaps' })
   }
   for (const atom of findOrphanAtoms(base)) {

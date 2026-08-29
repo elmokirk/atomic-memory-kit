@@ -15,7 +15,31 @@ atoms/ ──compile──► one bundle (+ open gaps) ──► human edits ─
 
 - **The concept** — [`CONCEPT.md`](CONCEPT.md). Portable, implementation-independent. Start here.
 - **The limits** — [`LIMITATIONS.md`](LIMITATIONS.md). Read before adopting.
-- **The rules** — [`CONTRACT.md`](CONTRACT.md). Frontmatter contract v1.
+- **The rules** — [`CONTRACT.md`](CONTRACT.md). Contract `1.0.0`: dependencies, core rules, conformance levels.
+- **The server** — [`docs/MCP.md`](docs/MCP.md). Stateless MCP, revision `2026-07-28`.
+- **The comparison** — [`ANALYSIS-ANTHROPIC-MEMORY.md`](ANALYSIS-ANTHROPIC-MEMORY.md). Against Anthropic's memory stack, red-teamed.
+
+---
+
+## The loop, in one call
+
+The 2026-07-28 MCP revision introduced Multi Round-Trip Requests, which happen to
+be exactly this system's core workflow:
+
+```
+gap found ──► agent asks the human ──► human answers ──► restructured into atoms
+```
+
+`memory_close_gaps` returns `resultType: "input_required"` with one elicitation
+per open gap. The client collects answers and retries the same call with
+`inputResponses`; the server turns them into contract-checked atom proposals and
+returns a diff. No session, no sticky routing — the retry may land on a different
+process.
+
+```bash
+node agent/mcp-server.mjs --config ./memory.config.json            # stdio
+node agent/mcp-server.mjs --config ./memory.config.json --http 8787 # streamable HTTP
+```
 
 ---
 
@@ -147,7 +171,8 @@ src/                pure engine — no I/O, no framework, no network
   types.ts            contract types
   config.ts           defaults + language profile
   parse-frontmatter.ts YAML subset parser
-  schema.ts           contract validation (core / standard / extension)
+  contract.ts         the contract as data — imports nothing, everything imports it
+  schema.ts           contract enforcement (derived from contract.ts)
   loader.ts           parse + validate + index + graph integrity  ← trust boundary
   score.ts            normalize · stem · tokenize · scoreAtom
   search.ts           scope gate, budget, 1-hop edge expansion
@@ -155,12 +180,13 @@ src/                pure engine — no I/O, no framework, no network
   gaps.ts             marker protocol, streaming detector, ledger, reports
   eval.ts             retrieval evaluation + baseline regression
   drift.ts            external claim verification
+  restructure.ts      material -> validated atom proposals (the inbound direction)
 adapters/fs.ts      the only file that touches I/O
 cli/                thin shell over src/
-agent/              skills, MCP server, AGENTS.md snippet
-docs/               deep dives + porting guide
+agent/              skills, MCP server (2026-07-28), AGENTS.md snippet
+docs/               deep dives + porting guide + MCP reference
 example/            working memory with planted gaps
-tests/              59 tests, node:test, zero deps
+tests/              110 tests, node:test, zero deps
 ```
 
 ---

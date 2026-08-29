@@ -21,9 +21,12 @@ import type {
   MemoryFileRaw,
 } from './types.ts'
 import { MemoryContractError } from './types.ts'
+import type { DiagnosticCode } from './contract.ts'
 
 export interface LoadIssue {
   path: string
+  /** Stable diagnostic code from the contract. Branch on this, not the message. */
+  code: DiagnosticCode
   message: string
 }
 
@@ -90,7 +93,11 @@ export function loadMemory(files: MemoryFileRaw[], config: MemoryConfig): LoadRe
     try {
       ({ data, body } = parseFrontmatter(file.content, normalizedPath))
     } catch (error) {
-      throw new MemoryContractError(error instanceof Error ? error.message : String(error), normalizedPath)
+      throw new MemoryContractError(
+        error instanceof Error ? error.message : String(error),
+        normalizedPath,
+        'E_PARSE',
+      )
     }
 
     const { atom, issues } = validateAtom(data, body, {
@@ -99,9 +106,10 @@ export function loadMemory(files: MemoryFileRaw[], config: MemoryConfig): LoadRe
     })
 
     for (const issue of issues) {
-      if (issue.severity === 'error') throw new MemoryContractError(issue.message, normalizedPath)
-      if (issue.severity === 'warning') warnings.push({ path: normalizedPath, message: issue.message })
-      else infos.push({ path: normalizedPath, message: issue.message })
+      const entry = { path: normalizedPath, code: issue.code, message: issue.message }
+      if (issue.severity === 'error') throw new MemoryContractError(issue.message, normalizedPath, issue.code)
+      if (issue.severity === 'warning') warnings.push(entry)
+      else infos.push(entry)
     }
 
     if (!atom) continue
@@ -110,6 +118,7 @@ export function loadMemory(files: MemoryFileRaw[], config: MemoryConfig): LoadRe
       throw new MemoryContractError(
         `duplicate id "${atom.id}" (also in ${byId.get(atom.id)!.sourcePath})`,
         normalizedPath,
+        'E_ID_DUPLICATE',
       )
     }
     atom.sourcePath = normalizedPath
@@ -141,12 +150,13 @@ function validateEdges(atoms: MemoryAtom[], warnings: LoadIssue[]): void {
   for (const atom of atoms) {
     for (const target of atom.related ?? []) {
       if (target === atom.id) {
-        throw new MemoryContractError('self-reference in related[]', atom.sourcePath ?? atom.id)
+        throw new MemoryContractError('self-reference in related[]', atom.sourcePath ?? atom.id, 'E_EDGE_SELF')
       }
       if (!ids.has(target)) {
         throw new MemoryContractError(
           `related target "${target}" does not exist — create the atom or remove the edge`,
           atom.sourcePath ?? atom.id,
+          'E_EDGE_DANGLING',
         )
       }
     }
@@ -172,7 +182,7 @@ function validateEdges(atoms: MemoryAtom[], warnings: LoadIssue[]): void {
       const signature = [...cycle].sort().join('|')
       if (reported.has(signature)) return
       reported.add(signature)
-      warnings.push({ path: id, message: `related[] cycle: ${[...cycle, id].join(' -> ')}` })
+      warnings.push({ path: id, code: 'W_CYCLE', message: `related[] cycle: ${[...cycle, id].join(' -> ')}` })
       return
     }
     state.set(id, 1)

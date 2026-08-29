@@ -159,10 +159,14 @@ export interface MemoryConfig {
  */
 export class MemoryContractError extends Error {
   filePath?: string
+  /** Stable diagnostic code from `contract.ts`. Typed as string to keep this
+   *  module import-free and therefore at the bottom of the dependency graph. */
+  code?: string
 
-  constructor(message: string, filePath?: string) {
+  constructor(message: string, filePath?: string, code?: string) {
     super(filePath ? `${filePath}: ${message}` : message)
     this.name = 'MemoryContractError'
     this.filePath = filePath
+    this.code = code
   }
 }

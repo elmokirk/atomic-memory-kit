@@ -27,6 +27,34 @@ export {
   resolveLanguageProfile,
 } from './config.ts'
 
+export {
+  CONFORMANCE,
+  CONSUMERS,
+  CONTRACT_COMPATIBLE,
+  CONTRACT_ID,
+  CONTRACT_VERSION,
+  CORE_FIELD_NAMES,
+  DIAGNOSTICS,
+  FIELDS,
+  GRAMMAR,
+  IMPLEMENTED_CONFORMANCE,
+  RESERVED_FIELD_NAMES,
+  STANDARD_FIELD_NAMES,
+  blastRadius,
+  describeContract,
+  fieldSpec,
+  isContractCompatible,
+} from './contract.ts'
+export type {
+  ConformanceLevel,
+  ConsumerName,
+  ContractDescriptor,
+  DiagnosticCode,
+  FieldClass,
+  FieldSpec,
+  FieldType,
+} from './contract.ts'
+
 export { parseFrontmatter } from './parse-frontmatter.ts'
 export type { FrontmatterResult } from './parse-frontmatter.ts'
 
@@ -42,8 +70,8 @@ export { buildQuery, normalizeContext, searchMemory } from './search.ts'
 export type { SearchOptions } from './search.ts'
 
 export {
+  BUNDLE_CONTRACT_VERSION,
   BUNDLE_VERSION,
-  CONTRACT_VERSION,
   buildScopeIndex,
   compileMemory,
   decompile,
@@ -81,3 +109,13 @@ export type { EvalCase, EvalSummary, EvalThresholds } from './eval.ts'
 
 export { checkDrift, driftToGaps, findUncoveredAtoms } from './drift.ts'
 export type { Claim, ClaimType, DriftFinding } from './drift.ts'
+
+export { draftFromMarkdown, materialize, planApply } from './restructure.ts'
+export type {
+  ApplyPlan,
+  AtomDraft,
+  AtomProposal,
+  DraftOptions,
+  ProposalPlan,
+  ProposalVerdict,
+} from './restructure.ts'

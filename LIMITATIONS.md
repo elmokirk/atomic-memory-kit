@@ -178,6 +178,57 @@ locking. Single-writer assumptions throughout.
 
 ---
 
+## Restructuring (material → atoms)
+
+**Nothing here understands your content.** `draftFromMarkdown` splits on markdown
+headings. That is a structural operation, and it reports `confidence:
+"structural"` to say so. The semantic split — deciding where one topic ends —
+belongs to the agent or the human. There is no mode in which the kit does it.
+
+**Drafts are unfinished by design.** No keywords, no summary, `needs: ["keywords",
+"summary"]`. An atom with machine-guessed keywords is *worse* than one with none:
+it looks complete and silently fails retrieval. Fixing that later requires
+noticing it, which is exactly what nobody does.
+
+**`planApply` proves conformance, not truth.** A proposal can be contract-clean,
+graph-consistent, well-keyworded — and factually wrong. The contract cannot check
+whether a fact is true. `drift` catches numeric contradictions against declared
+external claims and nothing else.
+
+**Apply is all-or-nothing and destructive at file level.** One rejected proposal
+blocks the batch. An accepted `update` overwrites the whole file, including
+anything a human edited by hand outside the frontmatter. Use git.
+
+---
+
+## The MCP server
+
+**MRTR state is signed with a per-process key unless you set one.** Without
+`AMK_STATE_SECRET`, a retry that lands on a different process fails integrity
+verification. Fine for stdio and one HTTP process; broken behind a load balancer.
+The server warns on startup; it cannot detect the misconfiguration itself.
+
+**`requestState` has a 30-minute TTL and is not single-use.** Binding covers the
+tool name and expiry, which bounds replay without preventing it inside the
+window. Nothing here needs single-use semantics; if you add a tool that does, the
+spec requires enforcing it server-side, and this server has no store to do that
+with.
+
+**No authorization.** The server exposes everything to whoever can reach the
+socket, and `memory_apply` writes files. Bind to localhost or put a gateway in
+front. There is no OAuth, no token check, no per-tool permission.
+
+**`subscriptions/listen` is not implemented.** Clients will not be told when a
+human edits atoms. `ttlMs` is a hint, not a guarantee, and `"watch": true`
+reloads on every request at the cost of re-parsing the whole memory.
+
+**Elicitation quality is the client's problem.** The server sends a form schema;
+how it is rendered, and whether the human answers usefully, is entirely outside
+its control. A client that renders `body` as a one-line input will produce
+one-line atoms.
+
+---
+
 ## Explicitly out of scope
 
 These are not gaps in the implementation. They are things this project has

@@ -23,11 +23,12 @@
  * Anything that breaks that invariant is a bug, not a formatting preference.
  */
 import { parseFrontmatter } from './parse-frontmatter.ts'
+import { CONTRACT_ID, CONTRACT_VERSION } from './contract.ts'
 import type { GapRecord } from './gaps.ts'
 import type { MemoryAtom, MemoryBase, MemoryFileRaw } from './types.ts'
 
 export const BUNDLE_VERSION = 1
-export const CONTRACT_VERSION = 1
+export const BUNDLE_CONTRACT_VERSION = 1
 
 const ATOM_OPEN = /^<!--\s*amk:atom\s+([^\s]+)\s*-->$/
 const ATOM_CLOSE = /^<!--\s*amk:end\s+([^\s]+)\s*-->$/
@@ -52,7 +53,10 @@ export interface CompiledAtom {
 
 export interface CompiledMemory {
   generatedAt: string
+  /** Legacy bundle-format marker. Kept at 1 for wire compatibility. */
   contractVersion: number
+  /** Contract identity for foreign consumers: `{ id, version }` semver. */
+  contract: { id: string, version: string }
   atomCount: number
   categories: string[]
   atoms: CompiledAtom[]
@@ -67,7 +71,8 @@ export interface CompiledMemory {
 export function compileMemory(base: MemoryBase, gaps: GapRecord[] = []): CompiledMemory {
   return {
     generatedAt: new Date().toISOString(),
-    contractVersion: CONTRACT_VERSION,
+    contractVersion: BUNDLE_CONTRACT_VERSION,
+    contract: { id: CONTRACT_ID, version: CONTRACT_VERSION },
     atomCount: base.atoms.length,
     categories: [...new Set(base.atoms.map((atom) => atom.category))].sort(),
     atoms: base.atoms.map(toCompiledAtom),
