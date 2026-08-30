@@ -110,6 +110,9 @@ export type { EvalCase, EvalSummary, EvalThresholds } from './eval.ts'
 export { checkDrift, driftToGaps, findUncoveredAtoms } from './drift.ts'
 export type { Claim, ClaimType, DriftFinding } from './drift.ts'
 
+export { MEMORY_ROOT, runMemoryToolCommand, toRelativePath } from './memory-tool.ts'
+export type { MemoryToolContext, MemoryToolInput, MemoryToolOutcome } from './memory-tool.ts'
+
 export { draftFromMarkdown, materialize, planApply } from './restructure.ts'
 export type {
   ApplyPlan,

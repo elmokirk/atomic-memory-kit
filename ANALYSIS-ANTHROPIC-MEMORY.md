@@ -324,7 +324,13 @@ holes to the agent using it.** The model gets a contract violation back as a
 tool result and can correct itself in the same turn — the write path becomes
 self-teaching, and the model never has to have memorised the contract.
 
-Nobody has shipped that. It is maybe 200 lines on top of what exists here.
+Nobody had shipped that. **It is now built** — `src/memory-tool.ts` and
+`adapters/memory-tool.ts`, documented in [`docs/MEMORY-TOOL.md`](docs/MEMORY-TOOL.md).
+It came to ~380 lines of core plus ~150 of wiring rather than the 200 estimated
+here, because two properties turned out to be worth more than the gap recording
+that motivated it: a `delete` that refuses to orphan an inbound edge, and a
+`rename` that rewrites every inbound `related[]` atomically. Neither is possible
+for a handler that only sees bytes and paths.
 
 ---
 

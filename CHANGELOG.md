@@ -25,15 +25,48 @@ Subsections to use: `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `Secur
 
 ### Added
 
-- _Nothing yet._
+- **Anthropic memory-tool bridge.** `src/memory-tool.ts` (pure) and
+  `adapters/memory-tool.ts` (I/O) implement the six `memory_20250818` commands
+  with the contract underneath. The documented return strings are preserved, so
+  the model's trained expectations still hold; four behaviours are added that a
+  filesystem handler cannot offer:
+  - a `view` of a path that does not exist is **recorded as a gap** — the model
+    guessed a filename, and a wrong guess is a statement about demand;
+  - a `create` / `str_replace` / `insert` whose result violates the contract is
+    **refused with its diagnostic code**, so the model corrects itself in the
+    same turn instead of memorising rules;
+  - a `delete` that would leave an inbound edge dangling is **refused with the
+    referrer list**;
+  - a `rename` **rewrites every inbound `related[]` reference atomically**, and
+    warns that citations outside the memory cannot be repaired.
+- Directory listings are annotated with each atom's title and summary, so the
+  model can choose what to open without opening anything.
+- Degraded mode: a memory that fails to load no longer bricks the agent. `view`
+  and `delete` keep working so the damage can be repaired, and the load error is
+  surfaced in the listing.
+- `AMK_AUTH_TOKEN` — constant-time bearer auth on the HTTP transport. Required in
+  practice for hosted clients, since custom connectors dial the server from
+  Anthropic's cloud. The server warns when it is unset.
+- `amk contract [--json]` — print the field table with consumers and
+  blast-radius markers, or the full machine-readable descriptor.
+- `VERDICT.md` — the two-minute form of the analysis: comparison table, what this
+  does better, and the two-tier recommendation.
+- `docs/MEMORY-TOOL.md`, `docs/COWORK.md`, `SOURCEMAP.md`.
 
 ### Changed
 
-- _Nothing yet._
+- `package.json` exports `./adapters/memory-tool`.
+- Tests: 110 → 161.
 
 ### Fixed
 
-- _Nothing yet._
+- `SOURCEMAP.md` claimed `npm run contract` was runnable; the escaping in the
+  `package.json` one-liner was broken. Replaced with the real `amk contract`
+  command rather than deleting the claim.
+- The memory-tool `rename` accepted destinations that do not round-trip through
+  the id mapping (`plans.markdown` implied the id `pricing.plans.markdown`,
+  which maps back to `pricing/plans/markdown.md`). Now refused, with contract
+  rule R1.5 named. Found by its own test.
 
 ## [0.2.0] - 2026-08-29
 

@@ -17,7 +17,10 @@ atoms/ ──compile──► one bundle (+ open gaps) ──► human edits ─
 - **The limits** — [`LIMITATIONS.md`](LIMITATIONS.md). Read before adopting.
 - **The rules** — [`CONTRACT.md`](CONTRACT.md). Contract `1.0.0`: dependencies, core rules, conformance levels.
 - **The server** — [`docs/MCP.md`](docs/MCP.md). Stateless MCP, revision `2026-07-28`.
-- **The comparison** — [`ANALYSIS-ANTHROPIC-MEMORY.md`](ANALYSIS-ANTHROPIC-MEMORY.md). Against Anthropic's memory stack, red-teamed.
+- **Anthropic's memory tool** — [`docs/MEMORY-TOOL.md`](docs/MEMORY-TOOL.md). Back `/memories` with the contract.
+- **Cowork setup** — [`docs/COWORK.md`](docs/COWORK.md). The two connector fields, and the HTTPS constraint.
+- **The verdict** — [`VERDICT.md`](VERDICT.md). Two-minute comparison against Anthropic's stack, and where this belongs.
+- **The comparison** — [`ANALYSIS-ANTHROPIC-MEMORY.md`](ANALYSIS-ANTHROPIC-MEMORY.md). The long form, red-teamed, with sources.
 - **The provenance** — [`SOURCEMAP.md`](SOURCEMAP.md). Where every file came from, the module graph, and the source behind every dated claim.
 
 ---
@@ -182,12 +185,13 @@ src/                pure engine — no I/O, no framework, no network
   eval.ts             retrieval evaluation + baseline regression
   drift.ts            external claim verification
   restructure.ts      material -> validated atom proposals (the inbound direction)
-adapters/fs.ts      the only file that touches I/O
+  memory-tool.ts      Anthropic memory-tool commands, contract-gated
+adapters/           fs.ts + memory-tool.ts — the only files that touch I/O
 cli/                thin shell over src/
 agent/              skills, MCP server (2026-07-28), AGENTS.md snippet
 docs/               deep dives + porting guide + MCP reference
 example/            working memory with planted gaps
-tests/              110 tests, node:test, zero deps
+tests/              161 tests, node:test, zero deps
 ```
 
 ---

@@ -883,6 +883,25 @@ function runStdio() {
  * process behind a round-robin balancer behave identically to one.
  * ------------------------------------------------------------------ */
 
+/**
+ * Optional bearer token for the HTTP transport.
+ *
+ * Not optional in practice for hosted clients: Claude's custom connectors reach
+ * the server from Anthropic's cloud, so the endpoint must be on the public
+ * internet — where `memory_apply` writing files to an unauthenticated socket is
+ * not a defensible position. Localhost-only stdio use needs nothing.
+ */
+const AUTH_TOKEN = process.env.AMK_AUTH_TOKEN
+
+function authorized(req) {
+  if (!AUTH_TOKEN) return true
+  const header = req.headers.authorization ?? ''
+  const presented = header.startsWith('Bearer ') ? header.slice(7) : ''
+  const a = Buffer.from(presented)
+  const b = Buffer.from(AUTH_TOKEN)
+  return a.length === b.length && timingSafeEqual(a, b)
+}
+
 function runHttp(port) {
   const server = createServer((req, res) => {
     const json = (status, payload, headers = {}) => {
@@ -893,6 +912,10 @@ function runHttp(port) {
         ...headers,
       })
       res.end(text)
+    }
+
+    if (!authorized(req)) {
+      return json(401, { error: 'unauthorized' }, { 'www-authenticate': 'Bearer' })
     }
 
     if (req.method !== 'POST') {
@@ -941,6 +964,12 @@ function runHttp(port) {
 
   server.listen(port, () => {
     process.stderr.write(`atomic-memory-kit MCP (${PROTOCOL_VERSION}) on http://127.0.0.1:${port}\n`)
+    if (!AUTH_TOKEN) {
+      process.stderr.write(
+        'warning: AMK_AUTH_TOKEN is unset — every caller who can reach this port can write '
+        + 'to the memory. Set it before exposing this beyond localhost.\n',
+      )
+    }
     if (STATE_SECRET_IS_EPHEMERAL) {
       process.stderr.write(
         'warning: AMK_STATE_SECRET is unset, so requestState is signed with a per-process key. '

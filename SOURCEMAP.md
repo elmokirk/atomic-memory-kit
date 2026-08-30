@@ -7,9 +7,9 @@ Written 2026-08-29 for `0.2.0`. If you change the module graph or add a dated
 claim, change this file in the same commit — a sourcemap that lags the code is
 worse than none, because it is believed.
 
-- **Code total:** 10 030 lines tracked, of which ~2 900 are `src/`
+- **Code total:** ~11 700 lines tracked, of which ~3 300 are `src/`
 - **Dependencies:** zero, runtime and dev
-- **Tests:** 110, `node:test`
+- **Tests:** 161, `node:test`
 
 ---
 
@@ -51,10 +51,11 @@ Two vocabulary changes were made during extraction, to remove chatbot framing:
 | Bundle format in `src/compile.ts` | The source round-tripped JSON only. A human cannot edit JSON usefully. |
 | Gap **ledger** in `src/gaps.ts` | The source logged gap events. It never deduplicated, counted, or reopened. |
 | `agent/mcp-server.mjs` | No MCP surface existed. |
+| `src/memory-tool.ts`, `adapters/memory-tool.ts` | Anthropic's memory tool did not exist when the source kit was written, and its handler is client-side — so the contract can sit underneath it. |
 | `CONCEPT.md` | The idea lived in Kirk's head and in the shape of the code, nowhere in writing. |
 | `LIMITATIONS.md` | — |
 | `ANALYSIS-ANTHROPIC-MEMORY.md` | — |
-| `tests/` | The source had two lifecycle-gated test files; these 110 are new or rewritten. |
+| `tests/` | The source had two lifecycle-gated test files; these 161 are new or rewritten. |
 
 ### 1.3 Defects found *during* extraction
 
@@ -99,9 +100,11 @@ module may depend downward, never upward.
     eval.ts ........... search, gaps, types
     drift.ts .......... gaps, types
     restructure.ts .... compile, contract, loader, schema, types
+    memory-tool.ts .... compile, gaps, parse-frontmatter, schema, types
 
   LAYER 4 — I/O and shells                    (the only files that touch the world)
     adapters/fs.ts .... node:fs, node:path, gaps, types
+    adapters/memory-tool.ts  node:fs, node:path, fs.ts, gaps, loader, memory-tool
     cli/amk.mjs ....... adapters/fs + src/*
     agent/mcp-server.mjs  adapters/fs + src/*
 ```
@@ -111,9 +114,10 @@ nothing. The moment it imports the loader or the scorer, it stops being a
 specification and becomes a description of one implementation's behaviour. Guard
 this in review.
 
-**Second property:** exactly one file in `src/` and `adapters/` performs I/O.
-That is why `src/` runs unchanged in Node, Deno, Bun, a browser, a worker, or an
-edge runtime.
+**Second property:** nothing in `src/` performs I/O — all of it lives in
+`adapters/`. That is why `src/` runs unchanged in Node, Deno, Bun, a browser, a
+worker, or an edge runtime, and why every adapter is small enough to reimplement
+against a database or object store in an afternoon.
 
 ---
 
@@ -130,6 +134,8 @@ edge runtime.
 | What does this NOT do? | `LIMITATIONS.md` |
 | How do I put it in my own project? | `docs/PORTING.md` |
 | How do agents drive the loop? | `docs/MCP.md`, `agent/mcp-server.mjs` |
+| How do I back `/memories` with this? | `docs/MEMORY-TOOL.md` |
+| How do I connect Cowork? | `docs/COWORK.md` |
 | How does it compare to Anthropic's memory? | `ANALYSIS-ANTHROPIC-MEMORY.md` |
 | Which idea is the durable one? | `CONCEPT.md` §2, `ANALYSIS-…` §5 |
 
@@ -188,14 +194,15 @@ Reproduce any of these from a clean checkout.
 
 | Claim made in the docs | How to check it |
 |---|---|
-| 110 tests, zero dependencies | `npm test` |
+| 161 tests, zero dependencies | `npm test` |
 | Contract, prose and validator agree | `node --test tests/contract.test.ts` |
 | Round-trip is lossless | `node --test tests/round-trip.test.ts` |
 | MRTR works across cold processes | `node --test tests/mcp.test.ts` |
+| Path traversal is rejected, writes are gated | `node --test tests/memory-tool.test.ts` |
 | The example memory has findable gaps | `cd example && node ../cli/amk.mjs doctor` |
 | The HTTP transport speaks the revision | `npm run mcp:http`, then POST `server/discover` |
 | The contract is machine-readable | `npm run contract` |
 
-Last full run, 2026-08-29 on Node 22 / Windows: **110 pass, 0 fail.** Example
+Last full run, 2026-08-29 on Node 22 / Windows: **161 pass, 0 fail.** Example
 `doctor`: contract clean, graph intact, scope accuracy 1.0, hit rate 1.0,
 precision 0.875, 1 drift finding, 2 open gaps — all planted on purpose.

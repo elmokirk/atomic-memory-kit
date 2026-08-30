@@ -227,6 +227,45 @@ how it is rendered, and whether the human answers usefully, is entirely outside
 its control. A client that renders `body` as a one-line input will produce
 one-line atoms.
 
+**No authorization on the HTTP transport beyond a static bearer token.** Set
+`AMK_AUTH_TOKEN` and the server compares it in constant time; that is the whole
+model. No OAuth, no per-tool permissions, no rate limiting, no audit log of who
+wrote what. For anything beyond a single trusted operator, terminate auth at a
+gateway.
+
+---
+
+## The memory-tool bridge
+
+**Every file under the root must be an atom.** There is no room for a free-form
+scratch note alongside contracted knowledge — a `create` with no frontmatter is
+refused. That makes this the wrong backend for episodic memory ("prefers
+TypeScript", "decided X on Tuesday"), which is exactly the Tier-1/Tier-2 split
+argued in `VERDICT.md`. Pointing it at a personal second brain is the documented
+way to make it unpleasant.
+
+**Gap topics are derived from paths.** `/memories/product/refunds.md` becomes
+`product refunds`. That is enough to deduplicate and count recurrence; it is not
+a question, and it carries none of the context the model had when it guessed.
+
+**A wrong guess is not always demand.** A model that fabricates plausible
+filenames will manufacture gaps for topics nobody ever asked about. Recurrence
+counting damps this — a fabricated topic rarely repeats — but the ledger is
+noisier than one fed by real user questions.
+
+**Renames repair the graph, not the world.** Inbound `related[]` edges inside
+the memory are rewritten. Citations outside it — a transcript, a gap ledger
+entry, another team's system — still point at the old id, and nothing can fix
+that. The tool result says so; whether the model heeds it is not enforceable.
+
+**Reads the whole memory per cold call.** The handler caches and invalidates on
+write, so a session is cheap, but the first command after every write re-parses
+everything. At a few hundred atoms that is milliseconds; there is no incremental
+parse and no lazy loading.
+
+**Single-writer.** Two agents against one root will interleave and lose writes.
+No locking anywhere.
+
 ---
 
 ## Explicitly out of scope
