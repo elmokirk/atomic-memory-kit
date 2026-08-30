@@ -20,9 +20,11 @@ atoms/ ──compile──► one bundle (+ open gaps) ──► human edits ─
 - **Anthropic's memory tool** — [`docs/MEMORY-TOOL.md`](docs/MEMORY-TOOL.md). Back `/memories` with the contract.
 - **Wiring it up** — [`docs/INTEGRATIONS.md`](docs/INTEGRATIONS.md). Claude Code, Cowork, the memory tool, library.
 - **Where it could go** — [`IDEAS.md`](IDEAS.md). Scopes, escalation, self-observation — captured and scored.
+- **What ships next** — [`docs/plans/`](docs/plans/). One plan per release, each with kill criteria.
 - **The verdict** — [`VERDICT.md`](VERDICT.md). Two-minute comparison against Anthropic's stack, and where this belongs.
 - **The comparison** — [`ANALYSIS-ANTHROPIC-MEMORY.md`](ANALYSIS-ANTHROPIC-MEMORY.md). The long form, red-teamed, with sources.
-- **The provenance** — [`SOURCEMAP.md`](SOURCEMAP.md). Where every file came from, the module graph, and the source behind every dated claim.
+- **The provenance** — [`SOURCEMAP.md`](SOURCEMAP.md). Where the code came from and what depends on what.
+- **The sources** — [`LINKMAP.md`](LINKMAP.md). Every external claim, with retrieval date and reliability grade.
 
 ---
 

@@ -278,6 +278,65 @@ not a rewrite.
 
 ---
 
+## 6b. Three concepts that follow from the first three
+
+These are conceptual, not implementation detail, which is why they live here.
+Each is scheduled rather than built — see [`docs/plans/`](docs/plans/) — but the
+*ideas* port whether or not this codebase ever ships them.
+
+### Durability decides what belongs here at all
+
+Not everything an agent learns is knowledge worth curating.
+
+```
+fixed     the user's name, a company's founding year      changes ~never
+stable    preferences, product facts, research findings    changes on events
+volatile  "meeting Wednesday with X about Y"               changes by Friday
+```
+
+A memory of this kind is for the first two. Volatile knowledge belongs in an
+agent's working memory, where the cost of being wrong is one session rather than
+one citation.
+
+This matters more than it sounds. A curated store that accepts volatile writes
+becomes a pile within weeks: thousands of thin entries, none worth maintaining,
+all of them diluting retrieval. **The boundary has to be enforced at write time,
+because that is the only moment anyone is paying attention.** A cleanup pass
+later never happens.
+
+The generalisable rule: *classify knowledge by how long it stays true, and refuse
+the class you are not built for.*
+
+### Knowledge from outside needs provenance and an expiry
+
+An atom that came from a source has three questions attached that an atom written
+from experience does not: where from, when checked, when to re-check.
+
+The important part is what expiry *does not* do. An expired atom is not deleted
+and not hidden — it keeps answering, and it produces a gap. Silent deletion is
+the same failure as silent truncation: the system gets quieter about what it does
+not know, which is exactly backwards.
+
+### Scope is about authority, not about folders
+
+Knowledge separates by *who is entitled to correct it*:
+
+| | authority | a gap here means |
+|---|---|---|
+| personal | the user | ask them |
+| business | the user | ask them |
+| research | the source | go and look |
+
+That last column is the whole reason the distinction is conceptual rather than
+cosmetic. It decides **who closes a gap** — and a system that asks a human about
+things a search could answer will train its human to ignore it.
+
+Two consequences worth stating: a research fact must never be "corrected" by
+opinion, only re-fetched; and policy of this kind belongs above the content,
+not in a field the author can set to whatever is convenient.
+
+---
+
 ## 7. What this is not
 
 Stating this precisely is part of the concept, because a concept that claims
@@ -330,6 +389,15 @@ Everything else is taste.
 10. **Keep the core pure.** No I/O, no framework, no network in the engine. One
     thin host adapter is what makes it portable to the next runtime — and this
     concept will outlive several of them.
+11. **Refuse what you are not built for, at write time.** Durability is the
+    entry criterion (§6b). A store that accepts everything becomes the pile it
+    was built to replace.
+12. **Verification needs a fixed point outside the verifier.** Every check in
+    this system compares against something it did not produce: a claim against
+    an atom, a query against an expected result, an edge against the graph, a
+    date against a clock. A system asking itself whether it was right is not
+    checking, it is agreeing. This is the rule that decides which
+    self-improvement ideas are real and which are theatre.
 
 ---
 

@@ -137,6 +137,8 @@ against a database or object store in an afternoon.
 | How do I back `/memories` with this? | `docs/MEMORY-TOOL.md` |
 | How do I connect Cowork, Claude Code, the API? | `docs/INTEGRATIONS.md` |
 | What might come next, and what should not? | `IDEAS.md` |
+| What is planned for the next releases? | `docs/plans/` |
+| Who says so, and when did we check? | `LINKMAP.md` |
 | How does it compare to Anthropic's memory? | `ANALYSIS-ANTHROPIC-MEMORY.md` |
 | Which idea is the durable one? | `CONCEPT.md` §2, `ANALYSIS-…` §5 |
 
@@ -144,48 +146,21 @@ against a database or object store in an afternoon.
 
 ## 4. External sources
 
-Every dated or factual claim about someone else's system traces to a row here.
-**Retrieved 2026-08-29.** Anthropic and the MCP working group both move fast;
-treat anything below as stale after roughly a quarter and re-verify before
-quoting it.
+Moved to [`LINKMAP.md`](LINKMAP.md), which is the canonical place for every
+claim this repo makes about someone else's system — MCP, Anthropic's memory
+stack, custom connectors, `/dream` — each with a retrieval date and a
+reliability grade.
 
-### 4.1 Model Context Protocol
+The split is deliberate:
 
-| Claim | Source | Used in |
+| | Covers | Question it answers |
 |---|---|---|
-| Current revision is `2026-07-28`; versions are `YYYY-MM-DD` and only bump on breaking change | [Versioning](https://modelcontextprotocol.io/specification/versioning) | `agent/mcp-server.mjs`, `docs/MCP.md` |
-| `initialize` handshake and `Mcp-Session-Id` removed; `_meta` carries version + capabilities; `server/discover` mandatory; `ping` / `logging/setLevel` removed | [Key Changes](https://modelcontextprotocol.io/specification/2026-07-28/changelog) | server dispatch, `docs/MCP.md` |
-| Error allocation: `-32020` HeaderMismatch, `-32021` MissingRequiredClientCapability, `-32022` UnsupportedProtocolVersion | [Key Changes](https://modelcontextprotocol.io/specification/2026-07-28/changelog) §12 | `ERROR` in the server, `tests/mcp.test.ts` |
-| `ttlMs` + `cacheScope` required on list results; deterministic `tools/list` order recommended | [Key Changes](https://modelcontextprotocol.io/specification/2026-07-28/changelog) minor §3, §5 | `cacheable()`, tool ordering |
-| `Mcp-Method` / `Mcp-Name` headers required on POST; server rejects header/body disagreement | [Key Changes](https://modelcontextprotocol.io/specification/2026-07-28/changelog) minor §4 (SEP-2243) | HTTP transport |
-| MRTR: `resultType: "input_required"`, `inputRequests`, `inputResponses`, opaque `requestState`; new JSON-RPC id on retry; server MUST integrity-protect state, SHOULD bind principal, TTL, and originating request | [MRTR](https://modelcontextprotocol.io/specification/2026-07-28/basic/patterns/mrtr) | `memory_close_gaps`, `signState` / `verifyState` |
-| Server MUST NOT send an `inputRequests` type the client did not declare | [MRTR](https://modelcontextprotocol.io/specification/2026-07-28/basic/patterns/mrtr) server req. 7 | the `no-elicitation` degradation path |
-| `server/discover` response shape: `supportedVersions`, `capabilities`, `instructions`, `serverInfo` in `_meta` | [Discovery](https://modelcontextprotocol.io/specification/2026-07-28/server/discover) | `dispatch('server/discover')` |
-| Sampling, Roots and Logging deprecated; SSE resumability removed | [Key Changes](https://modelcontextprotocol.io/specification/2026-07-28/changelog) deprecations, major §9 | "deliberately not implemented" in `docs/MCP.md` |
-| Stateless servers can run with no stateful infrastructure | [Cloudflare: the next generation of MCP](https://blog.cloudflare.com/mcp-v2/) · [MCP blog](https://blog.modelcontextprotocol.io/posts/2026-07-28/) | `ANALYSIS-…` §7 |
+| **This file** | internal provenance | *Where did our code come from, and what depends on what?* |
+| **`LINKMAP.md`** | external provenance | *Who says so, when did we check, and how much does it weigh?* |
 
-### 4.2 Anthropic memory stack
-
-| Claim | Source | Used in |
-|---|---|---|
-| `{"type": "memory_20250818", "name": "memory"}` is the whole config; no input schema; commands `view` / `create` / `str_replace` / `insert` / `delete` / `rename` scoped to `/memories` | [Memory tool](https://platform.claude.com/docs/en/agents-and-tools/tool-use/memory-tool) | `ANALYSIS-…` §1 |
-| The handler is client-side; you execute the commands and must block path traversal | same | `ANALYSIS-…` §1, §6 |
-| Claude 4+, beta header `context-management-2025-06-27`, API / Bedrock / Vertex | same | `ANALYSIS-…` §1 |
-| Context editing (`clear_tool_uses_20250919`) clears stale tool results in-window; the model is warned before a clear and can write to memory first | [Context editing](https://platform.claude.com/docs/en/build-with-claude/context-editing) | `ANALYSIS-…` §1, §3.1 |
-| 84 % token reduction, 39 % improvement on a 100-turn web-search task, memory + context editing | Anthropic benchmark, via [Managing context](https://claude.com/blog/context-management) | `ANALYSIS-…` §1 |
-| Server-side compaction is the recommended path | [Managing context](https://claude.com/blog/context-management) | `ANALYSIS-…` §1 |
-
-> **Claims deliberately not sourced.** The description of Claude Code's
-> `CLAUDE.md` hierarchy and its auto-memory `MEMORY.md` index comes from the
-> runtime this repo was built in, not from published documentation. It is
-> observation, and `ANALYSIS-…` §1 presents it as such. Verify before quoting.
-
-### 4.3 Not evaluated
-
-Named in `ANALYSIS-…` §3.1 as prior art that also does not model absence:
-LangMem, Zep, Mem0, mem-agent. **These were not tested.** The claim is a
-positioning statement based on their public framing, not a benchmark, and should
-not be repeated as a measured result.
+They rot on different clocks. The module graph changes when we refactor; the
+external facts change when Anthropic ships. Keeping them in one file meant one
+of the two was always the reason to skip the update.
 
 ---
 

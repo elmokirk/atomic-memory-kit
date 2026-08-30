@@ -52,6 +52,16 @@ Subsections to use: `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `Secur
 - `VERDICT.md` — the two-minute form of the analysis: comparison table, what this
   does better, and the two-tier recommendation.
 - `docs/MEMORY-TOOL.md`, `docs/INTEGRATIONS.md`, `SOURCEMAP.md`.
+- `LINKMAP.md` — external provenance split out of `SOURCEMAP.md`. Every claim
+  about MCP, Anthropic's memory stack, custom connectors and `/dream` with a
+  retrieval date and a reliability grade (spec / docs / vendor / press /
+  community / observation). The two files rot on different clocks, which is
+  why keeping them together meant one was always the reason to skip the update.
+- `docs/plans/` — a release train, 0.3.0 through 1.0.0, one file per release:
+  durability and provenance, scopes, escalation, the audit pass, and the
+  contract freeze with a language-neutral conformance suite. Each plan carries
+  UX / DX / agent-experience notes, the oracle its tests check against, the
+  documents it must update, and kill criteria written before the work starts.
 - `IDEAS.md` — captured directions (scopes, durability, escalation,
   self-observation) each scored against one question: what oracle tells us it
   worked? Three are marked "do not build", with reasons.

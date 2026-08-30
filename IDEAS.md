@@ -258,6 +258,10 @@ branch. That is slower and it is the whole point.
 
 ## 6. What I would build, in order
 
+> Each of these now has a release plan with tests, docs, risks and kill
+> criteria: [`docs/plans/`](docs/plans/). The order below is the release train.
+
+
 1. **`durability` as a contract field with a rejecting gate** (I3). One field,
    one rule, largest effect on whether this survives contact with a real second
    brain.

@@ -129,4 +129,6 @@ If exactly one idea survives:
 
 *Long form: [`ANALYSIS-ANTHROPIC-MEMORY.md`](ANALYSIS-ANTHROPIC-MEMORY.md) ·
 provenance and sources: [`SOURCEMAP.md`](SOURCEMAP.md) ·
-what is not built yet and whether it should be: [`IDEAS.md`](IDEAS.md)*
+what is not built yet and whether it should be: [`IDEAS.md`](IDEAS.md) ·
+the release train: [`docs/plans/`](docs/plans/) ·
+external sources: [`LINKMAP.md`](LINKMAP.md)*
