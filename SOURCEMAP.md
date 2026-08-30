@@ -135,7 +135,8 @@ against a database or object store in an afternoon.
 | How do I put it in my own project? | `docs/PORTING.md` |
 | How do agents drive the loop? | `docs/MCP.md`, `agent/mcp-server.mjs` |
 | How do I back `/memories` with this? | `docs/MEMORY-TOOL.md` |
-| How do I connect Cowork? | `docs/COWORK.md` |
+| How do I connect Cowork, Claude Code, the API? | `docs/INTEGRATIONS.md` |
+| What might come next, and what should not? | `IDEAS.md` |
 | How does it compare to Anthropic's memory? | `ANALYSIS-ANTHROPIC-MEMORY.md` |
 | Which idea is the durable one? | `CONCEPT.md` §2, `ANALYSIS-…` §5 |
 

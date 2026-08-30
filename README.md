@@ -18,7 +18,8 @@ atoms/ ──compile──► one bundle (+ open gaps) ──► human edits ─
 - **The rules** — [`CONTRACT.md`](CONTRACT.md). Contract `1.0.0`: dependencies, core rules, conformance levels.
 - **The server** — [`docs/MCP.md`](docs/MCP.md). Stateless MCP, revision `2026-07-28`.
 - **Anthropic's memory tool** — [`docs/MEMORY-TOOL.md`](docs/MEMORY-TOOL.md). Back `/memories` with the contract.
-- **Cowork setup** — [`docs/COWORK.md`](docs/COWORK.md). The two connector fields, and the HTTPS constraint.
+- **Wiring it up** — [`docs/INTEGRATIONS.md`](docs/INTEGRATIONS.md). Claude Code, Cowork, the memory tool, library.
+- **Where it could go** — [`IDEAS.md`](IDEAS.md). Scopes, escalation, self-observation — captured and scored.
 - **The verdict** — [`VERDICT.md`](VERDICT.md). Two-minute comparison against Anthropic's stack, and where this belongs.
 - **The comparison** — [`ANALYSIS-ANTHROPIC-MEMORY.md`](ANALYSIS-ANTHROPIC-MEMORY.md). The long form, red-teamed, with sources.
 - **The provenance** — [`SOURCEMAP.md`](SOURCEMAP.md). Where every file came from, the module graph, and the source behind every dated claim.

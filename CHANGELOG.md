@@ -51,7 +51,10 @@ Subsections to use: `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `Secur
   blast-radius markers, or the full machine-readable descriptor.
 - `VERDICT.md` — the two-minute form of the analysis: comparison table, what this
   does better, and the two-tier recommendation.
-- `docs/MEMORY-TOOL.md`, `docs/COWORK.md`, `SOURCEMAP.md`.
+- `docs/MEMORY-TOOL.md`, `docs/INTEGRATIONS.md`, `SOURCEMAP.md`.
+- `IDEAS.md` — captured directions (scopes, durability, escalation,
+  self-observation) each scored against one question: what oracle tells us it
+  worked? Three are marked "do not build", with reasons.
 
 ### Changed
 

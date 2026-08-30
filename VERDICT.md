@@ -62,7 +62,7 @@ bundle is lossless, editable and re-importable, with open gaps as checkboxes
 ### Claude Code and Cowork — yes, and it is already built
 
 The MCP server is stateless, speaks revision `2026-07-28`, and is one connector
-line away. See [`docs/COWORK.md`](docs/COWORK.md).
+line away. See [`docs/INTEGRATIONS.md`](docs/INTEGRATIONS.md).
 
 The deeper integration is also built: [`docs/MEMORY-TOOL.md`](docs/MEMORY-TOOL.md).
 Anthropic's memory tool is client-side by design, so its handler can be backed by
@@ -128,4 +128,5 @@ If exactly one idea survives:
 ---
 
 *Long form: [`ANALYSIS-ANTHROPIC-MEMORY.md`](ANALYSIS-ANTHROPIC-MEMORY.md) ·
-provenance and sources: [`SOURCEMAP.md`](SOURCEMAP.md)*
+provenance and sources: [`SOURCEMAP.md`](SOURCEMAP.md) ·
+what is not built yet and whether it should be: [`IDEAS.md`](IDEAS.md)*

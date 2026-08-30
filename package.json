@@ -25,7 +25,9 @@
     "CONTRACT.md",
     "LIMITATIONS.md",
     "ANALYSIS-ANTHROPIC-MEMORY.md",
-    "SOURCEMAP.md"
+    "SOURCEMAP.md",
+    "VERDICT.md",
+    "IDEAS.md"
   ],
   "scripts": {
     "validate": "node cli/amk.mjs validate",
