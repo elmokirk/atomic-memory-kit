@@ -23,7 +23,8 @@
     "CONCEPT.md",
     "CONTRACT.md",
     "LIMITATIONS.md",
-    "ANALYSIS-ANTHROPIC-MEMORY.md"
+    "ANALYSIS-ANTHROPIC-MEMORY.md",
+    "SOURCEMAP.md"
   ],
   "scripts": {
     "validate": "node cli/amk.mjs validate",
@@ -37,7 +38,7 @@
     "check": "node cli/amk.mjs validate && node cli/amk.mjs eval && npm run test",
     "mcp": "node agent/mcp-server.mjs --config ./memory.config.json",
     "mcp:http": "node agent/mcp-server.mjs --config ./memory.config.json --http 8787",
-    "contract": "node -e \"import(\"./src/contract.ts\").then(m=>console.log(JSON.stringify(m.describeContract(),null,2)))\""
+    "contract": "node cli/amk.mjs contract"
   },
   "keywords": [
     "agent-memory",

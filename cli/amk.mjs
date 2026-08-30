@@ -26,6 +26,7 @@ import {
   renderBundle,
   renderDigest,
 } from '../src/compile.ts'
+import { describeContract } from '../src/contract.ts'
 import { checkDrift, driftToGaps, findUncoveredAtoms } from '../src/drift.ts'
 import {
   checkThresholds,
@@ -64,6 +65,7 @@ ${style.bold('amk')} — atomic memory kit
   ${style.bold('amk init')} [--root memory]        scaffold a memory root + config
   ${style.bold('amk validate')}                    load, verify the contract and the graph
   ${style.bold('amk stats')}                       counts, categories, edges, budget health
+  ${style.bold('amk contract')} [--json]           print the frontmatter contract
   ${style.bold('amk search')} <query> [--context c] retrieve against the memory, show scores
 
   ${style.bold('amk compile')} [--gaps]            write bundle.md + compiled.json + digest.md
@@ -492,6 +494,35 @@ summary: "One sentence that fully describes what this atom holds."
     }
 
     console.log(report)
+  },
+
+  /**
+   * Print the contract. `--json` emits the machine-readable descriptor — the
+   * same object `memory_contract` serves over MCP, so a foreign implementation
+   * can be built against it without reading any prose.
+   */
+  contract() {
+    const descriptor = describeContract()
+    if (flags.json) {
+      console.log(JSON.stringify(descriptor, null, 2))
+      return
+    }
+    heading(`contract ${descriptor.contract} ${descriptor.version} — conformance ${descriptor.conformance}`)
+    for (const klass of ['core', 'standard']) {
+      console.log(`\n  ${style.bold(klass)}`)
+      for (const field of descriptor.fields.filter((entry) => entry.class === klass)) {
+        const marks = [
+          field.affectsRetrieval ? 'retrieval' : null,
+          field.isReferenceTarget ? 'reference-target' : null,
+        ].filter(Boolean).join(', ')
+        console.log(`    ${field.name.padEnd(14)} ${field.type.padEnd(9)} ${style.dim(field.consumers.join(' '))}${marks ? style.dim(`  [${marks}]`) : ''}`)
+      }
+    }
+    console.log(`\n  ${style.bold('extension')}`)
+    console.log(`    anything else   preserved, inert, empty blast radius`)
+    console.log(`    ${style.dim(`never claimed by the contract: ${descriptor.reserved.neverClaimed.join(', ')}`)}`)
+    console.log(`\n  ${style.dim(`${Object.keys(descriptor.diagnostics).length} diagnostic codes · amk contract --json for the full descriptor`)}`)
+    console.log()
   },
 
   doctor() {

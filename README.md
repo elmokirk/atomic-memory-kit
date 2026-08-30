@@ -18,6 +18,7 @@ atoms/ ──compile──► one bundle (+ open gaps) ──► human edits ─
 - **The rules** — [`CONTRACT.md`](CONTRACT.md). Contract `1.0.0`: dependencies, core rules, conformance levels.
 - **The server** — [`docs/MCP.md`](docs/MCP.md). Stateless MCP, revision `2026-07-28`.
 - **The comparison** — [`ANALYSIS-ANTHROPIC-MEMORY.md`](ANALYSIS-ANTHROPIC-MEMORY.md). Against Anthropic's memory stack, red-teamed.
+- **The provenance** — [`SOURCEMAP.md`](SOURCEMAP.md). Where every file came from, the module graph, and the source behind every dated claim.
 
 ---
 
