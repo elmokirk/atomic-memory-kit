@@ -15,7 +15,7 @@ atoms/ ──compile──► one bundle (+ open gaps) ──► human edits ─
 
 - **The concept** — [`CONCEPT.md`](CONCEPT.md). Portable, implementation-independent. Start here.
 - **The limits** — [`LIMITATIONS.md`](LIMITATIONS.md). Read before adopting.
-- **The rules** — [`CONTRACT.md`](CONTRACT.md). Contract `1.0.0`: dependencies, core rules, conformance levels.
+- **The rules** — [`CONTRACT.md`](CONTRACT.md). Contract `1.1.0`: dependencies, core rules, conformance levels.
 - **The server** — [`docs/MCP.md`](docs/MCP.md). Stateless MCP, revision `2026-07-28`.
 - **Anthropic's memory tool** — [`docs/MEMORY-TOOL.md`](docs/MEMORY-TOOL.md). Back `/memories` with the contract.
 - **Wiring it up** — [`docs/INTEGRATIONS.md`](docs/INTEGRATIONS.md). Claude Code, Cowork, the memory tool, library.
@@ -86,6 +86,7 @@ amk gaps add "SSO pricing on the Growth plan" --kind runtime
 # 2. Structural detectors add their own findings:
 amk eval      # curated questions that stopped retrieving
 amk drift     # claims in a source of truth with no backing atom
+amk expiring  # atoms whose validUntil has passed — still served, now suspect
 amk gaps      # TODO markers, graph orphans, cycles
 
 # 3. Compile everything the memory knows + everything it is missing:
@@ -121,6 +122,8 @@ usually not the person who wants to touch four hundred files.
 | `amk index` | Regenerate the always-injected scope index atom |
 | `amk eval [--update-baseline]` | Run eval cases; record failures as gaps |
 | `amk drift` | Check external claims against atoms |
+| `amk expiring [--within N]` | Atoms past `validUntil`, plus what goes stale in N days |
+| `amk contract [--json]` | Print the field table, or the machine-readable descriptor |
 | `amk gaps [--report <file>]` | Refresh structural detectors; show or write the report |
 | `amk gaps add <topic> --kind k` | Record a gap by hand |
 | `amk gaps sync <file>` | Read ticked checkboxes back; close those gaps |
@@ -189,12 +192,13 @@ src/                pure engine — no I/O, no framework, no network
   drift.ts            external claim verification
   restructure.ts      material -> validated atom proposals (the inbound direction)
   memory-tool.ts      Anthropic memory-tool commands, contract-gated
+  expiry.ts           validUntil vs. an injected clock -> expiry gaps
 adapters/           fs.ts + memory-tool.ts — the only files that touch I/O
 cli/                thin shell over src/
 agent/              skills, MCP server (2026-07-28), AGENTS.md snippet
 docs/               deep dives + porting guide + MCP reference
 example/            working memory with planted gaps
-tests/              161 tests, node:test, zero deps
+tests/              203 tests, node:test, zero deps
 ```
 
 ---

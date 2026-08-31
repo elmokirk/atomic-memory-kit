@@ -32,7 +32,7 @@ export const CONTRACT_ID = 'io.atomicmemory/contract'
  *   minor — an additive optional field, or a new consumer for an existing field
  *   patch — wording, diagnostics, non-normative guidance
  */
-export const CONTRACT_VERSION = '1.0.0'
+export const CONTRACT_VERSION = '1.1.0'
 
 /** Contract versions this build can load. Used for negotiation. */
 export const CONTRACT_COMPATIBLE = ['1.x'] as const
@@ -215,6 +215,57 @@ export const FIELDS: FieldSpec[] = [
     summary: 'Score nudge, priority/100 clamped to ±1. Tie-breaking, not forcing.',
   },
   {
+    name: 'durability',
+    class: 'standard',
+    type: 'string',
+    required: false,
+    onTypeViolation: 'error',
+    // An UNKNOWN value warns, per R4.1 — `durability: seasonal` must not stop a
+    // memory loading. The refusal of the known value `volatile` is a separate
+    // rule (R11), not a value violation, which is why this stays a warning.
+    onValueViolation: 'warning',
+    consumers: ['loader'],
+    affectsRetrieval: false,
+    isReferenceTarget: false,
+    summary: 'How long this stays true. `volatile` is refused on write, not stored.',
+  },
+  {
+    name: 'source',
+    class: 'standard',
+    type: 'string',
+    required: false,
+    onTypeViolation: 'error',
+    onValueViolation: 'info',
+    consumers: ['host', 'citation'],
+    affectsRetrieval: false,
+    isReferenceTarget: false,
+    summary: 'Where a claim came from. A URL, or free text for offline provenance.',
+  },
+  {
+    name: 'retrievedAt',
+    class: 'standard',
+    type: 'string',
+    required: false,
+    onTypeViolation: 'error',
+    onValueViolation: 'warning',
+    consumers: ['host'],
+    affectsRetrieval: false,
+    isReferenceTarget: false,
+    summary: 'ISO date the source was last checked. Not when the atom was written.',
+  },
+  {
+    name: 'validUntil',
+    class: 'standard',
+    type: 'string',
+    required: false,
+    onTypeViolation: 'error',
+    onValueViolation: 'warning',
+    consumers: ['gaps'],
+    affectsRetrieval: false,
+    isReferenceTarget: false,
+    summary: 'ISO date after which this atom is suspect. Produces a gap, never a deletion.',
+  },
+  {
     name: 'link',
     class: 'standard',
     type: 'string',
@@ -250,10 +301,27 @@ export const RESERVED_FIELD_NAMES = FIELDS.map((f) => f.name)
  * interoperable. Exported as source strings so a Python or Go port can compile
  * the same expressions instead of re-deriving them.
  */
+/**
+ * Durability — the entry criterion (CONTRACT.md R11, CONCEPT.md §6b).
+ *
+ * Ordered from longest-lived to shortest. The last one is not a value this
+ * contract stores; it is the value it refuses, because a curated store that
+ * accepts session knowledge becomes the pile it was built to replace.
+ */
+export const DURABILITY = ['fixed', 'stable', 'volatile'] as const
+
+/** Values an atom may actually carry once loaded. `volatile` never gets in. */
+export const DURABILITY_STORED = ['fixed', 'stable'] as const
+
+/** Applied when `durability` is absent or unrecognised. */
+export const DURABILITY_DEFAULT = 'stable'
+
 export const GRAMMAR = {
   id: '^[a-z0-9]+(?:[.-][a-z0-9]+)*$',
   lang: '^[a-z]{2}(-[a-zA-Z0-9]+)?$',
   link: '^(\\/|https?:\\/\\/)[^\\s]*$',
+  /** Calendar date. Deliberately not a datetime: expiry is a day, not a moment. */
+  date: '^\\d{4}-\\d{2}-\\d{2}$',
   /** Directory separator that `id` maps to on disk. */
   idPathSeparator: '.',
   /** Prefix marking a path as meta content, never ingested. */
@@ -275,6 +343,7 @@ export const DIAGNOSTICS = {
   E_EDGE_MALFORMED: 'A related[] target does not match the id grammar.',
   E_ID_DUPLICATE: 'Two atoms declare the same id.',
   E_PARSE: 'Frontmatter is outside the supported YAML subset.',
+  E_DURABILITY_VOLATILE: 'The atom declares itself volatile; this store is for durable knowledge.',
   W_ID_FORM: 'id deviates from the lowercase dotted/kebab convention.',
   W_LANG_FORM: 'lang is not an ISO tag.',
   W_CATEGORY_UNKNOWN: 'category is not registered in config.',
@@ -284,8 +353,12 @@ export const DIAGNOSTICS = {
   W_BODY_EMPTY: 'Body is empty.',
   W_LABEL_ORPHAN: 'linkLabel without link.',
   W_CYCLE: 'A cycle of three or more atoms in the edge graph.',
+  W_DURABILITY_UNKNOWN: 'An unrecognised durability value; treated as the default.',
+  W_DATE_FORM: 'A date field is not an ISO calendar date (YYYY-MM-DD).',
+  W_DATE_UNQUOTED: 'A date is unquoted; a stricter YAML parser would read it as a Date.',
   I_EXTENSION: 'An extension field is present and inert.',
   I_ORPHAN: 'The atom has no inbound or outbound edges.',
+  I_EXPIRED: 'The atom is past its validUntil date and is suspect, not deleted.',
 } as const
 
 export type DiagnosticCode = keyof typeof DIAGNOSTICS
@@ -333,6 +406,17 @@ export interface ContractDescriptor {
   conformance: ConformanceLevel
   fields: FieldSpec[]
   grammar: typeof GRAMMAR
+  /**
+   * The durability enum, split so a consumer can see at a glance which value is
+   * refused rather than stored. An agent reading only `values` would otherwise
+   * assume all three are writable.
+   */
+  durability: {
+    values: readonly string[]
+    stored: readonly string[]
+    refused: readonly string[]
+    default: string
+  }
   diagnostics: typeof DIAGNOSTICS
   consumers: typeof CONSUMERS
   reserved: {
@@ -355,6 +439,12 @@ export function describeContract(): ContractDescriptor {
     conformance: IMPLEMENTED_CONFORMANCE,
     fields: FIELDS,
     grammar: GRAMMAR,
+    durability: {
+      values: DURABILITY,
+      stored: DURABILITY_STORED,
+      refused: DURABILITY.filter((value) => !(DURABILITY_STORED as readonly string[]).includes(value)),
+      default: DURABILITY_DEFAULT,
+    },
     diagnostics: DIAGNOSTICS,
     consumers: CONSUMERS,
     reserved: {

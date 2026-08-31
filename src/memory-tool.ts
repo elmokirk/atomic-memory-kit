@@ -251,8 +251,9 @@ interface GateResult {
 function gate(relative: string, content: string, base: MemoryBase | null): GateResult {
   let data: Record<string, unknown>
   let body: string
+  let quotedScalars: Set<string>
   try {
-    ({ data, body } = parseFrontmatter(content, relative))
+    ({ data, body, quotedScalars } = parseFrontmatter(content, relative))
   } catch (error) {
     return {
       ok: false,
@@ -268,6 +269,7 @@ function gate(relative: string, content: string, base: MemoryBase | null): GateR
   const { atom, issues } = validateAtom(data, body, {
     knownCategories: base?.config.categories,
     knownIntents: base?.config.intents,
+    quotedScalars,
   })
 
   const errors = issues.filter((issue: ValidationIssue) => issue.severity === 'error')
@@ -628,6 +630,10 @@ function frontmatterOf(atom: MemoryBase['atoms'][number]): Record<string, unknow
     ...(atom.related ? { related: atom.related } : {}),
     alwaysInclude: atom.alwaysInclude,
     ...(typeof atom.priority === 'number' ? { priority: atom.priority } : {}),
+    durability: atom.durability,
+    ...(atom.source ? { source: atom.source } : {}),
+    ...(atom.retrievedAt ? { retrievedAt: atom.retrievedAt } : {}),
+    ...(atom.validUntil ? { validUntil: atom.validUntil } : {}),
     ...(atom.link ? { link: atom.link } : {}),
     ...(atom.linkLabel ? { linkLabel: atom.linkLabel } : {}),
     ...atom.extensions,
@@ -648,6 +654,10 @@ function toCompiled(atom: MemoryBase['atoms'][number]) {
     synonyms: atom.synonyms,
     related: atom.related ?? [],
     ...(typeof atom.priority === 'number' ? { priority: atom.priority } : {}),
+    durability: atom.durability,
+    ...(atom.source ? { source: atom.source } : {}),
+    ...(atom.retrievedAt ? { retrievedAt: atom.retrievedAt } : {}),
+    ...(atom.validUntil ? { validUntil: atom.validUntil } : {}),
     ...(atom.link ? { link: atom.link } : {}),
     ...(atom.linkLabel ? { linkLabel: atom.linkLabel } : {}),
     body: atom.body,

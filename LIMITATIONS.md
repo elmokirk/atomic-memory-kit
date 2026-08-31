@@ -131,6 +131,40 @@ bodies on every run, so a ticked-off TODO whose `TODO(...)` comment is still in
 the file will reopen immediately. This is correct behaviour — the marker *is* the
 gap — but it surprises people once.
 
+**Expiry does not delete, hide, or down-rank.** An atom past its `validUntil`
+is retrieved and cited exactly as before; the only consequence is a gap. That is
+deliberate — see `docs/GAP-SPOTLIGHTING.md` §6 — but it means an unattended
+memory serves stale answers indefinitely. **`amk expiring` in CI is the missing
+half of the feature**; without something that reads the gaps, expiry is
+bookkeeping.
+
+**Expiry only sees atoms that declared a date.** No `validUntil`, no signal.
+Nothing infers one, and nothing warns when `source` appears without an expiry —
+that would be a warning on almost every atom in most memories, which trains
+people to ignore warnings. `findUnboundedProvenance()` lists those atoms on
+request; acting on the list is a human decision.
+
+**Provenance is not verification.** `source` records where a claim was said to
+come from. Nothing fetches the URL, nothing checks it resolves, nothing compares
+its content to the atom. A `source` that 404s, or that never supported the claim
+in the first place, passes every check here. `retrievedAt` is likewise an
+assertion, not an observation — an agent can write today's date on a fact it
+took from its training data, and the store cannot tell.
+
+> This is the field's genuine risk: provenance theatre reads as rigour. Treat
+> `source` as a pointer for the human who re-checks, not as evidence.
+
+**Durability is a declaration, not a judgement.** The `volatile` refusal fires
+only when someone *says* the knowledge is volatile. An atom reading *"meeting
+Wednesday with Anna"* with `durability: stable` — or with no `durability` at
+all, which defaults to stable — is written without complaint. The gate makes the
+Tier-1/Tier-2 boundary enforceable for a cooperating agent; it does not detect
+session knowledge, and no deterministic check could.
+
+**Dates are compared as calendar days in UTC.** No timezones, no times of day.
+An atom expiring "today" in Auckland may still be valid to the checker, and vice
+versa. For anything where a few hours matter, this is the wrong tool.
+
 **The ledger is a file, not a database.** JSONL, rewritten wholesale on sync. Two
 processes writing concurrently will lose records. Fine for CLI and single-server
 use; not safe for multi-instance serverless without an external store.
@@ -148,6 +182,14 @@ always will be.
 
 **Precision counts category matches as relevant**, which is generous. A retrieved
 atom from the right category but the wrong topic counts as a hit.
+
+**And it penalises edge expansion**, which is the opposite bias. A `related[]`
+neighbour pulled in on purpose scores as an irrelevant retrieval unless its
+category happens to be listed in the case. So precision is simultaneously too
+kind about topics and too harsh about edges. Read it as a trend line, not a
+grade — and if it drops after you add an atom, look at *which* chunk moved
+before touching the eval cases. Editing the case to restore the number is tuning
+the ruler.
 
 ---
 

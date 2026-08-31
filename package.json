@@ -42,7 +42,8 @@
     "check": "node cli/amk.mjs validate && node cli/amk.mjs eval && npm run test",
     "mcp": "node agent/mcp-server.mjs --config ./memory.config.json",
     "mcp:http": "node agent/mcp-server.mjs --config ./memory.config.json --http 8787",
-    "contract": "node cli/amk.mjs contract"
+    "contract": "node cli/amk.mjs contract",
+    "expiring": "node cli/amk.mjs expiring"
   },
   "keywords": [
     "agent-memory",

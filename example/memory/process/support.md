@@ -6,7 +6,7 @@ lang: en
 intents: [process, objection]
 keywords: [support, response time, sla, hilfe, reaktionszeit]
 synonyms: [help, ticket]
-related: [product.onboarding]
+related: [research.gdpr-retention, product.onboarding]
 summary: "Support channels and the response times committed per plan."
 ---
 

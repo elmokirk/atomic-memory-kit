@@ -161,7 +161,7 @@ describe('contract exposure', () => {
     const [response] = await call([rpc(1, 'tools/call', { name: 'memory_contract' })])
     const contract = payload(response)
     assert.equal(contract.contract, 'io.atomicmemory/contract')
-    assert.equal(contract.version, '1.0.0')
+    assert.equal(contract.version, '1.1.0')
     assert.ok(contract.fields.some((field: { name: string }) => field.name === 'keywords'))
     assert.ok(contract.diagnostics.E_EDGE_DANGLING)
   })

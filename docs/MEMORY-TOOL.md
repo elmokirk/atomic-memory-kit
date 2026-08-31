@@ -94,6 +94,39 @@ Accepted with warnings — worth fixing:
 That distinction is the contract's severity model doing its job: R4 says unknown
 values warn and never block, so a thin atom lands and stays fixable.
 
+#### Session knowledge is refused at the door
+
+The same path carries the durability gate (contract R11). This is the one
+refusal that is about *what belongs here* rather than *whether it parses*:
+
+```json
+{ "command": "create", "path": "/memories/notes/wednesday.md",
+  "file_text": "---\nid: notes.wednesday\ntitle: \"Meeting\"\ncategory: notes\nlang: en\ndurability: volatile\n---\n\nMeeting Wednesday with Anna about the migration.\n" }
+```
+
+```text
+durability "volatile" is refused: this store is for knowledge that stays true.
+Session knowledge ("meeting Wednesday", "the file I am editing") belongs in your
+agent's working memory, where being wrong costs one session instead of one
+citation. Nothing was written.
+```
+
+The message names the alternative on purpose. "Rejected" teaches an agent to
+retry; "this belongs in your working memory" teaches it the boundary, once, in
+the turn where it tried to cross it — which is the only moment anyone is paying
+attention. This is the Tier-1 / Tier-2 split from `VERDICT.md` becoming
+enforceable instead of advisory.
+
+It applies to `create`, `str_replace` and `insert` alike, because all three are
+validated on their *result*: an edit that turns a stable atom volatile is
+refused exactly like a create.
+
+Two honest boundaries. The gate fires only when the agent *declares*
+`durability: volatile` — the same content with no `durability` field defaults to
+`stable` and is written without complaint. And an unrecognised value
+(`durability: seasonal`) warns rather than fails, per R4.1, so a foreign
+implementation's vocabulary never bricks a load.
+
 ### Delete cannot orphan an edge
 
 ```text

@@ -3,13 +3,13 @@
 Where every file came from, what it depends on, and which external source backs
 each factual claim in this repo.
 
-Written 2026-08-29 for `0.2.0`. If you change the module graph or add a dated
+Written 2026-08-29 for `0.2.0`, updated 2026-08-31 for `0.3.0`. If you change the module graph or add a dated
 claim, change this file in the same commit — a sourcemap that lags the code is
 worse than none, because it is believed.
 
 - **Code total:** ~11 700 lines tracked, of which ~3 300 are `src/`
 - **Dependencies:** zero, runtime and dev
-- **Tests:** 161, `node:test`
+- **Tests:** 203, `node:test`
 
 ---
 
@@ -51,11 +51,12 @@ Two vocabulary changes were made during extraction, to remove chatbot framing:
 | Bundle format in `src/compile.ts` | The source round-tripped JSON only. A human cannot edit JSON usefully. |
 | Gap **ledger** in `src/gaps.ts` | The source logged gap events. It never deduplicated, counted, or reopened. |
 | `agent/mcp-server.mjs` | No MCP surface existed. |
+| `src/expiry.ts` | The source had no notion of knowledge ageing. Everything in it was assumed permanently true. |
 | `src/memory-tool.ts`, `adapters/memory-tool.ts` | Anthropic's memory tool did not exist when the source kit was written, and its handler is client-side — so the contract can sit underneath it. |
 | `CONCEPT.md` | The idea lived in Kirk's head and in the shape of the code, nowhere in writing. |
 | `LIMITATIONS.md` | — |
 | `ANALYSIS-ANTHROPIC-MEMORY.md` | — |
-| `tests/` | The source had two lifecycle-gated test files; these 161 are new or rewritten. |
+| `tests/` | The source had two lifecycle-gated test files; these 203 are new or rewritten. |
 
 ### 1.3 Defects found *during* extraction
 
@@ -71,6 +72,7 @@ recorded so the source can be fixed too if it is ever revisited.
 | `amk doctor` claimed to run gap detectors and did not | `cli/amk.mjs` | Shared `refreshStructuralGaps()` with `amk gaps` |
 | `link` / `linkLabel` never type-checked — a number passed validation | `schema.ts` | Found by `tests/contract.test.ts`; string check added |
 | `amk gaps` detected cycles by matching message prose | `cli/amk.mjs` | Matches the `W_CYCLE` code |
+| Expiry gap topics contained elapsed days, so the ledger minted one uncloseable record per day per stale atom | `expiry.ts` | Topic is atom id + declared `validUntil`; elapsed time moved to the detail. Introduced and fixed within 0.3.0 |
 
 ---
 
@@ -101,6 +103,7 @@ module may depend downward, never upward.
     drift.ts .......... gaps, types
     restructure.ts .... compile, contract, loader, schema, types
     memory-tool.ts .... compile, gaps, parse-frontmatter, schema, types
+    expiry.ts ......... gaps, types
 
   LAYER 4 — I/O and shells                    (the only files that touch the world)
     adapters/fs.ts .... node:fs, node:path, gaps, types
@@ -170,15 +173,31 @@ Reproduce any of these from a clean checkout.
 
 | Claim made in the docs | How to check it |
 |---|---|
-| 161 tests, zero dependencies | `npm test` |
+| 203 tests, zero dependencies | `npm test` |
 | Contract, prose and validator agree | `node --test tests/contract.test.ts` |
 | Round-trip is lossless | `node --test tests/round-trip.test.ts` |
 | MRTR works across cold processes | `node --test tests/mcp.test.ts` |
 | Path traversal is rejected, writes are gated | `node --test tests/memory-tool.test.ts` |
+| Volatile is refused, expiry does not delete | `node --test tests/durability.test.ts` |
 | The example memory has findable gaps | `cd example && node ../cli/amk.mjs doctor` |
+| An expired atom is reported, not removed | `cd example && node ../cli/amk.mjs expiring` |
 | The HTTP transport speaks the revision | `npm run mcp:http`, then POST `server/discover` |
 | The contract is machine-readable | `npm run contract` |
 
-Last full run, 2026-08-29 on Node 22 / Windows: **161 pass, 0 fail.** Example
+Last full run, 2026-08-31 on Node 22 / Windows: **203 pass, 0 fail.** Example
 `doctor`: contract clean, graph intact, scope accuracy 1.0, hit rate 1.0,
-precision 0.875, 1 drift finding, 2 open gaps — all planted on purpose.
+precision 0.75, 1 drift finding, 3 open gaps — all planted on purpose.
+
+Precision moved 0.875 → 0.75 when the expired `research.gdpr-retention` atom
+joined the example. Cause, checked rather than assumed: the log-retention query
+retrieves the right atom first and then `process.support` as its 1-hop
+`related[]` neighbour, and the eval case does not list `process` among its
+expected categories — so a deliberate edge expansion is scored as an
+irrelevant retrieval.
+
+Left as it stands. Adding `process` to the case's `expectCategories` would
+restore 0.875 without changing a single retrieval, which is tuning the ruler
+rather than the thing being measured. The honest reading is that precision, as
+defined here, penalises edge expansion; that is a property of the metric, and
+`LIMITATIONS.md` says so. A number that only ever moves up is a number nobody is
+measuring.

@@ -1,6 +1,6 @@
 # Memory Contract
 
-**Contract:** `io.atomicmemory/contract` · **Version:** `1.0.0` · **Conformance of this build:** L4
+**Contract:** `io.atomicmemory/contract` · **Version:** `1.1.0` · **Conformance of this build:** L4
 
 The frontmatter contract is the load-bearing element of this kit. Retrieval can
 be replaced, the compiler can be rewritten, the CLI can be thrown away — but
@@ -206,6 +206,41 @@ unknown additions land in `extensions` by R4.2.
 **R10.2** Tooling **MUST** branch on codes, never on message text. Messages are
 prose and may be reworded in a patch release.
 
+### R11 — Durability, the entry criterion
+
+**R11.1** `durability` **MUST** be one of `fixed`, `stable`, `volatile`. Absent
+means `stable`.
+**R11.2** An atom declaring `durability: volatile` **MUST** be refused
+(`E_DURABILITY_VOLATILE`). It is not stored, not quarantined, not down-ranked.
+**R11.3** An unrecognised value **MUST** warn (`W_DURABILITY_UNKNOWN`) and be
+treated as `stable`. R4.1 applies here like everywhere else — this is a *value*
+violation, and the refusal of `volatile` is a separate rule about a value the
+contract knows perfectly well.
+**R11.4** No atom in a loaded base carries `volatile`. Consumers may rely on it.
+
+> **Why refuse rather than quarantine.** A curated store that accepts session
+> knowledge becomes the pile it was built to replace: thousands of thin entries,
+> none worth maintaining, all of them diluting retrieval. A quarantine directory
+> is friendlier and nobody empties it — it silently becomes the same pile with a
+> different name. The write is the only moment anyone is paying attention, so it
+> is the only moment the boundary can be taught.
+
+### R12 — Provenance and expiry
+
+**R12.1** `retrievedAt` and `validUntil` **MUST** be ISO calendar dates
+(`YYYY-MM-DD`). Deviation warns (`W_DATE_FORM`).
+**R12.2** Dates **SHOULD** be quoted. Our parser reads them as strings either
+way; a stricter YAML implementation reads an unquoted one as a Date, so an
+unquoted date is an interop hazard and warns (`W_DATE_UNQUOTED`).
+Serializers **MUST** emit them quoted.
+**R12.3** An atom past its `validUntil` **MUST NOT** be deleted, hidden, or
+down-ranked. It keeps serving and produces a gap of kind `expiry`.
+
+> **Why expiry never deletes.** Silent removal is the same failure as silent
+> truncation: the system gets quieter about what it does not know, which is
+> backwards for a contract whose whole point is that absence gets recorded. An
+> expired atom the user can see beats an absent one they cannot.
+
 ---
 
 ## 2. Field classes
@@ -213,7 +248,7 @@ prose and may be reworded in a patch release.
 | Class | Fields | Validation |
 |---|---|---|
 | **Core** (required) | `id`, `title`, `category`, `lang` | Missing or non-string → **error**, file rejected, load fails |
-| **Standard** (optional) | `summary`, `keywords`, `synonyms`, `intents`, `related`, `alwaysInclude`, `priority`, `link`, `linkLabel` | Wrong type → **error**. Unregistered value → warning (except `related`/`link`) |
+| **Standard** (optional) | `summary`, `keywords`, `synonyms`, `intents`, `related`, `alwaysInclude`, `priority`, `durability`, `source`, `retrievedAt`, `validUntil`, `link`, `linkLabel` | Wrong type → **error**. Unregistered value → warning (except `related`/`link`) |
 | **Extension** (open) | anything else — `region`, `validFrom`, `owner`, … | Preserved into `atom.extensions`. Listed as **info**. Inert until registered |
 
 ---
@@ -319,6 +354,38 @@ Score nudge: `priority / 100`, clamped to ±1. Preserved verbatim through
 round-trips. Gentle tie-breaking, not a way to force retrieval — an atom that
 needs a large priority to be found has a keyword problem.
 
+### `durability` — optional, default `stable`
+
+```yaml
+durability: fixed     # the user's name, a founding year. Changes ~never.
+durability: stable    # preferences, product facts, research findings.
+durability: volatile  # REFUSED — see R11.
+```
+
+The entry criterion. `volatile` is not a value this contract stores; it is the
+value it refuses, naming where the content belongs instead. See R11 and
+`CONCEPT.md` §6b.
+
+### `source` — optional
+
+Where a claim came from. An absolute URL, or free text for offline provenance
+("Slack thread with Anna, 2026-08-12"). Never validated as a URL — offline
+provenance is legitimate and a pattern check would only push people to fake it.
+
+### `retrievedAt` — optional
+
+ISO date the source was last *checked*, not when the atom was written. Quote it
+(R12.2).
+
+### `validUntil` — optional
+
+```yaml
+validUntil: "2026-11-30"
+```
+
+ISO date after which this atom is suspect. Nothing expires automatically: past
+this date the atom keeps answering and produces an `expiry` gap (R12.3). Quote it.
+
 ### `link` / `linkLabel` — optional
 
 Canonical surface this atom describes. `link` **MUST** be an absolute path
@@ -421,6 +488,7 @@ Stable API. Branch on these, not on messages (R10.2).
 | `E_EDGE_SELF` | error | `related[]` points at the atom itself |
 | `E_EDGE_DANGLING` | error | `related[]` points at a nonexistent id |
 | `E_EDGE_MALFORMED` | error | A `related[]` target violates the id grammar |
+| `E_DURABILITY_VOLATILE` | error | The atom declares itself volatile (R11.2) |
 | `W_ID_FORM` | warning | `id` deviates from the convention |
 | `W_LANG_FORM` | warning | `lang` is not an ISO tag |
 | `W_CATEGORY_UNKNOWN` | warning | Category not registered in config |
@@ -430,8 +498,12 @@ Stable API. Branch on these, not on messages (R10.2).
 | `W_BODY_EMPTY` | warning | Empty body |
 | `W_LABEL_ORPHAN` | warning | `linkLabel` without `link` |
 | `W_CYCLE` | warning | Cycle of three or more atoms |
+| `W_DURABILITY_UNKNOWN` | warning | Unrecognised durability; treated as `stable` |
+| `W_DATE_FORM` | warning | A date field is not `YYYY-MM-DD` |
+| `W_DATE_UNQUOTED` | warning | An unquoted date; a stricter parser reads it as a Date |
 | `I_EXTENSION` | info | An extension field is present and inert |
 | `I_ORPHAN` | info | The atom has no inbound or outbound edges |
+| `I_EXPIRED` | info | Past `validUntil` — suspect, not deleted |
 
 ---
 

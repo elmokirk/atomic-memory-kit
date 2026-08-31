@@ -28,7 +28,7 @@
  * see adapters/fs.ts for the JSONL implementation.
  */
 
-export type GapKind = 'runtime' | 'scope' | 'eval' | 'drift' | 'todo' | 'cycle' | 'orphan' | 'manual'
+export type GapKind = 'runtime' | 'scope' | 'eval' | 'drift' | 'todo' | 'cycle' | 'orphan' | 'expiry' | 'manual'
 
 export type GapStatus = 'open' | 'closed' | 'wontfix'
 

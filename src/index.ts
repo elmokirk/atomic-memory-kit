@@ -34,6 +34,9 @@ export {
   CONTRACT_ID,
   CONTRACT_VERSION,
   CORE_FIELD_NAMES,
+  DURABILITY,
+  DURABILITY_DEFAULT,
+  DURABILITY_STORED,
   DIAGNOSTICS,
   FIELDS,
   GRAMMAR,
@@ -108,6 +111,9 @@ export {
 export type { EvalCase, EvalSummary, EvalThresholds } from './eval.ts'
 
 export { checkDrift, driftToGaps, findUncoveredAtoms } from './drift.ts'
+
+export { expiryToGaps, findExpiring, findUnboundedProvenance } from './expiry.ts'
+export type { ExpiryFinding } from './expiry.ts'
 export type { Claim, ClaimType, DriftFinding } from './drift.ts'
 
 export { MEMORY_ROOT, runMemoryToolCommand, toRelativePath } from './memory-tool.ts'

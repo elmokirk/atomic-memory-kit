@@ -17,9 +17,25 @@
 export interface FrontmatterResult {
   data: Record<string, unknown>
   body: string
+  /**
+   * Keys whose value was written as a quoted inline scalar.
+   *
+   * Our parser keeps `2026-08-30` a string either way, but a stricter YAML
+   * implementation reads an unquoted one as a Date — so a foreign port would
+   * disagree with us about the type. Tracking it is what lets the validator warn
+   * about that interop hazard instead of it surfacing in someone else's repo.
+   */
+  quotedScalars: Set<string>
 }
 
 const ARRAY_PATTERN = /^\[(.*)]$/
+
+function isQuoted(raw: string): boolean {
+  const value = raw.trim()
+  if (value.length < 2) return false
+  return (value.startsWith('"') && value.endsWith('"'))
+    || (value.startsWith('\'') && value.endsWith('\''))
+}
 
 function parseScalar(raw: string): unknown {
   const value = raw.trim()
@@ -95,6 +111,7 @@ export function parseFrontmatter(fileContent: string, filePath?: string): Frontm
   const closeIndex = closeLine + 1
 
   const data: Record<string, unknown> = {}
+  const quotedScalars = new Set<string>()
   let index = 1
   while (index < closeIndex) {
     const line = lines[index]!
@@ -127,11 +144,12 @@ export function parseFrontmatter(fileContent: string, filePath?: string): Frontm
     if (ARRAY_PATTERN.test(rest)) {
       data[key] = parseInlineArray(rest)
     } else {
+      if (isQuoted(rest)) quotedScalars.add(key)
       data[key] = parseScalar(rest)
     }
     index++
   }
 
   const body = lines.slice(closeIndex + 1).join('\n').trim()
-  return { data, body }
+  return { data, body, quotedScalars }
 }

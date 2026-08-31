@@ -23,6 +23,41 @@ Subsections to use: `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `Secur
 
 ## [Unreleased]
 
+### Contract 1.1.0 — durability and provenance
+
+Additive. **There is nothing to migrate.** All four fields are optional, every
+atom valid under 1.0.0 is valid under 1.1.0, and an existing memory loads with
+zero new warnings. Run `amk validate` to confirm rather than taking this on
+trust.
+
+| Field | Type | Class | Default |
+|---|---|---|---|
+| `durability` | `fixed` \| `stable` | standard | `stable` |
+| `source` | string | standard | — |
+| `retrievedAt` | string, quoted ISO date | standard | — |
+| `validUntil` | string, quoted ISO date | standard | — |
+
+- **`durability: volatile` is refused on write** (`E_DURABILITY_VOLATILE`) at
+  every entry point: `amk validate`, `planApply`, `memory_apply`, and the
+  memory-tool `create` / `str_replace` / `insert` paths. The refusal names where
+  the content belongs instead — an agent learns the Tier-1 / Tier-2 boundary
+  from a tool result rather than from documentation it never reads. An
+  unrecognised value warns (`W_DURABILITY_UNKNOWN`) and behaves as `stable`, per
+  R4.1.
+- **`expiry` — the seventh gap detector.** `src/expiry.ts` compares `validUntil`
+  against an injected clock (`src/` still contains no `Date.now()`, which is what
+  keeps every test deterministic). An expired atom is **not** deleted, hidden or
+  down-ranked: it keeps serving and produces a gap carrying its `source`, so a
+  research agent can close it without a second lookup.
+- `amk expiring [--within N]` — what is already stale, plus what goes stale in
+  the next N days, with relative time rather than naked dates. Wired into
+  `amk gaps` and `amk doctor`.
+- Library: `findExpiring`, `expiryToGaps`, `findUnboundedProvenance` (atoms with
+  a `source` but no expiry — knowledge implicitly claiming it can never age).
+- `W_DATE_FORM` / `W_DATE_UNQUOTED` — dates must be `YYYY-MM-DD` and quoted. Ours
+  reads a bare date as a string; a foreign L1 implementation might read it as
+  arithmetic. The emitter always quotes.
+
 ### Added
 
 - **Anthropic memory-tool bridge.** `src/memory-tool.ts` (pure) and
@@ -69,13 +104,23 @@ Subsections to use: `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `Secur
 ### Changed
 
 - `package.json` exports `./adapters/memory-tool`.
-- Tests: 110 → 161.
+- `CLAUDE.md` and `.claude/skills/` — the project's own operating rules and four
+  skills (contract change, release planning, doc integrity, testing), so agent
+  work on this repo is governed by the same discipline as the code.
+- Tests: 110 → 203.
 
 ### Fixed
 
 - `SOURCEMAP.md` claimed `npm run contract` was runnable; the escaping in the
   `package.json` one-liner was broken. Replaced with the real `amk contract`
   command rather than deleting the claim.
+- Expiry gap topics embedded the elapsed days ("expired 30d ago"). The ledger
+  deduplicates by `(kind, normalized topic)`, so one stale atom minted a fresh,
+  uncloseable gap record every single day. The topic now carries the atom id and
+  its declared `validUntil`; elapsed time moved to the detail. Found by running
+  `amk doctor` on the example twice on different days — not by the test suite,
+  which had used the same injected clock for both observations. A regression test
+  now steps the clock.
 - The memory-tool `rename` accepted destinations that do not round-trip through
   the id mapping (`plans.markdown` implied the id `pricing.plans.markdown`,
   which maps back to `pricing/plans/markdown.md`). Now refused, with contract

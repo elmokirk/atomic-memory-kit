@@ -90,8 +90,9 @@ export function loadMemory(files: MemoryFileRaw[], config: MemoryConfig): LoadRe
 
     let data: Record<string, unknown>
     let body: string
+    let quotedScalars: Set<string>
     try {
-      ({ data, body } = parseFrontmatter(file.content, normalizedPath))
+      ({ data, body, quotedScalars } = parseFrontmatter(file.content, normalizedPath))
     } catch (error) {
       throw new MemoryContractError(
         error instanceof Error ? error.message : String(error),
@@ -103,6 +104,7 @@ export function loadMemory(files: MemoryFileRaw[], config: MemoryConfig): LoadRe
     const { atom, issues } = validateAtom(data, body, {
       knownCategories: config.categories,
       knownIntents: config.intents,
+      quotedScalars,
     })
 
     for (const issue of issues) {

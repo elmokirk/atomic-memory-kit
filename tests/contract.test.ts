@@ -110,6 +110,10 @@ describe('contract <-> validator derivation', () => {
       related: [],
       alwaysInclude: false,
       priority: 5,
+      durability: 'stable',
+      source: 'https://example.com',
+      retrievedAt: '2026-08-30',
+      validUntil: '2026-12-31',
       link: '/x',
       linkLabel: 'X',
     }
@@ -130,6 +134,10 @@ describe('contract <-> validator derivation', () => {
       related: 'a.b',
       alwaysInclude: 'yes',
       priority: 'high',
+      durability: 5,
+      source: 9,
+      retrievedAt: true,
+      validUntil: [],
       link: 'relative/path',
       linkLabel: 7,
     }

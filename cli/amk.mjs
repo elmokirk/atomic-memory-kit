@@ -28,6 +28,7 @@ import {
 } from '../src/compile.ts'
 import { describeContract } from '../src/contract.ts'
 import { checkDrift, driftToGaps, findUncoveredAtoms } from '../src/drift.ts'
+import { expiryToGaps, findExpiring, findUnboundedProvenance } from '../src/expiry.ts'
 import {
   checkThresholds,
   compareBaseline,
@@ -74,6 +75,7 @@ ${style.bold('amk')} — atomic memory kit
 
   ${style.bold('amk eval')} [--update-baseline]    run eval cases, record eval gaps
   ${style.bold('amk drift')}                       check external claims against atoms
+  ${style.bold('amk expiring')} [--within 30]       knowledge past or nearing validUntil
   ${style.bold('amk gaps')} [--report] [--sync f]  show / render / reconcile the gap ledger
   ${style.bold('amk gaps add')} <topic>            record a gap by hand
   ${style.bold('amk doctor')}                      validate + eval + drift + gaps in one run
@@ -136,6 +138,7 @@ function refreshStructuralGaps(ledger) {
   for (const atom of findOrphanAtoms(base)) {
     ledger.observe({ kind: 'orphan', topic: `no edges to or from ${atom.id}`, atomId: atom.id, source: 'amk gaps' })
   }
+  for (const observation of expiryToGaps(base, new Date())) ledger.observe(observation)
   persistLedger(ledger)
   return base
 }
@@ -501,6 +504,53 @@ summary: "One sentence that fully describes what this atom holds."
    * same object `memory_contract` serves over MCP, so a foreign implementation
    * can be built against it without reading any prose.
    */
+  /**
+   * What goes stale, and when. `--within` looks ahead; without it you only see
+   * what is already expired.
+   *
+   * Dates are always shown with a relative offset, because nobody reasons about
+   * "2026-09-15" — they reason about "in 16 days".
+   */
+  expiring() {
+    const { base } = load({ quiet: true })
+    const now = new Date()
+    const withinDays = flags.within ? parseInt(String(flags.within), 10) : 0
+    const findings = findExpiring(base, now, { withinDays })
+
+    heading(withinDays > 0 ? `expiring — within ${withinDays} days` : 'expiring — already expired')
+
+    if (findings.length === 0) {
+      ok(withinDays > 0 ? `nothing goes stale in the next ${withinDays} days` : 'nothing has expired')
+    }
+    for (const finding of findings) {
+      const when = finding.expired
+        ? `expired ${Math.abs(finding.daysRemaining)}d ago`
+        : `in ${finding.daysRemaining}d`
+      const line = `  ${finding.atomId.padEnd(28)} ${finding.validUntil}  ${style.dim(`(${when})`)}`
+      if (finding.expired) error(line.trim())
+      else console.log(line)
+      if (finding.source) console.log(`    ${style.dim(`re-check: ${finding.source}`)}`)
+    }
+
+    // Only genuinely expired atoms become gaps. A gap for something going stale
+    // in three months is noise today.
+    const ledger = ledgerFromDisk()
+    const observations = expiryToGaps(base, now)
+    for (const observation of observations) ledger.observe(observation)
+    persistLedger(ledger)
+
+    const unbounded = findUnboundedProvenance(base)
+    if (unbounded.length > 0) {
+      console.log()
+      info(`${unbounded.length} atom(s) cite a source but never expire: ${
+        unbounded.slice(0, 5).map((atom) => atom.id).join(', ')}${unbounded.length > 5 ? ', …' : ''}`)
+    }
+    if (observations.length > 0) {
+      console.log(`\n  ${observations.length} expiry gap(s) recorded. Nothing was deleted.`)
+    }
+    console.log()
+  },
+
   contract() {
     const descriptor = describeContract()
     if (flags.json) {
@@ -530,6 +580,7 @@ summary: "One sentence that fully describes what this atom holds."
     if (loadEvalCases()) commands.eval()
     else info('no eval cases — skipping retrieval eval')
     commands.drift()
+    commands.expiring()
     const ledger = ledgerFromDisk()
     refreshStructuralGaps(ledger)
     const open = ledger.open()

@@ -14,7 +14,14 @@
  * is the failure mode that costs the most trust.
  */
 import type { DiagnosticCode } from './contract.ts'
-import { FIELDS, GRAMMAR, RESERVED_FIELD_NAMES } from './contract.ts'
+import {
+  DURABILITY,
+  DURABILITY_DEFAULT,
+  DURABILITY_STORED,
+  FIELDS,
+  GRAMMAR,
+  RESERVED_FIELD_NAMES,
+} from './contract.ts'
 import type { MemoryAtom } from './types.ts'
 
 // Derived from the contract table rather than restated, so the two cannot drift.
@@ -32,6 +39,9 @@ const NUMBER_FIELDS = byType('number')
 const ID_PATTERN = new RegExp(GRAMMAR.id)
 const LANG_PATTERN = new RegExp(GRAMMAR.lang)
 const LINK_PATTERN = new RegExp(GRAMMAR.link)
+const DATE_PATTERN = new RegExp(GRAMMAR.date)
+
+const DATE_FIELDS = ['retrievedAt', 'validUntil']
 
 export interface ValidationIssue {
   /** error = file rejected · warning = loaded but flagged · info = FYI only. */
@@ -51,6 +61,12 @@ export interface ValidateOptions {
   knownIntents?: string[]
   /** Minimum keyword count before warning. Default 2. */
   minKeywords?: number
+  /**
+   * Keys the parser saw as quoted scalars, from `FrontmatterResult`. Only used
+   * to warn about unquoted dates; omitting it disables that one check rather
+   * than producing false positives.
+   */
+  quotedScalars?: Set<string>
 }
 
 function isStringArray(value: unknown): value is string[] {
@@ -111,6 +127,45 @@ export function validateAtom(
   }
   if (issues.some((issue) => issue.severity === 'error')) {
     return { issues }
+  }
+
+  // R11 — the entry criterion. Volatile knowledge is refused rather than
+  // stored: a curated memory that accepts session facts becomes the pile it was
+  // built to replace, and the refusal only teaches anything at write time.
+  const declaredDurability = data.durability as string | undefined
+  let durability: string = DURABILITY_DEFAULT
+  if (declaredDurability !== undefined) {
+    if (!DURABILITY.includes(declaredDurability as never)) {
+      warn(
+        'W_DURABILITY_UNKNOWN',
+        `unrecognised durability "${declaredDurability}" — treated as "${DURABILITY_DEFAULT}". `
+        + `Known values: ${DURABILITY.join(', ')}`,
+      )
+    } else if (!DURABILITY_STORED.includes(declaredDurability as never)) {
+      fail(
+        'E_DURABILITY_VOLATILE',
+        `durability "${declaredDurability}" is refused: this store is for knowledge that stays `
+        + 'true. Session knowledge ("meeting Wednesday", "the file I am editing") belongs in '
+        + 'your agent\'s working memory, where being wrong costs one session instead of one '
+        + 'citation. Nothing was written.',
+      )
+    } else {
+      durability = declaredDurability
+    }
+  }
+
+  for (const field of DATE_FIELDS) {
+    const value = data[field]
+    if (typeof value !== 'string') continue
+    if (!DATE_PATTERN.test(value)) {
+      warn('W_DATE_FORM', `field "${field}" should be an ISO calendar date (YYYY-MM-DD), got "${value}"`)
+      continue
+    }
+    // Our parser leaves it a string; a stricter YAML one would not. Quote it so
+    // an L1 port in another language reads the same type we do.
+    if (options.quotedScalars && !options.quotedScalars.has(field)) {
+      warn('W_DATE_UNQUOTED', `quote the date in "${field}" — a stricter YAML parser reads it as a Date`)
+    }
   }
 
   const link = data.link as string | undefined
@@ -181,6 +236,10 @@ export function validateAtom(
     synonyms: (data.synonyms as string[] | undefined) ?? [],
     ...(typeof priority === 'number' ? { priority } : {}),
     priorityBonus,
+    durability: durability as MemoryAtom['durability'],
+    source: typeof data.source === 'string' ? data.source : undefined,
+    retrievedAt: typeof data.retrievedAt === 'string' ? data.retrievedAt : undefined,
+    validUntil: typeof data.validUntil === 'string' ? data.validUntil : undefined,
     link: typeof data.link === 'string' ? data.link : undefined,
     linkLabel: typeof data.linkLabel === 'string' ? data.linkLabel : undefined,
     related,

@@ -23,7 +23,7 @@
  * Anything that breaks that invariant is a bug, not a formatting preference.
  */
 import { parseFrontmatter } from './parse-frontmatter.ts'
-import { CONTRACT_ID, CONTRACT_VERSION } from './contract.ts'
+import { CONTRACT_ID, CONTRACT_VERSION, DURABILITY_DEFAULT } from './contract.ts'
 import type { GapRecord } from './gaps.ts'
 import type { MemoryAtom, MemoryBase, MemoryFileRaw } from './types.ts'
 
@@ -45,6 +45,11 @@ export interface CompiledAtom {
   synonyms: string[]
   related: string[]
   priority?: number
+  /** Omitted when it is the default — a file full of `durability: stable` is noise. */
+  durability?: string
+  source?: string
+  retrievedAt?: string
+  validUntil?: string
   link?: string
   linkLabel?: string
   body: string
@@ -93,6 +98,10 @@ function toCompiledAtom(atom: MemoryAtom): CompiledAtom {
     synonyms: atom.synonyms,
     related: atom.related ?? [],
     ...(typeof atom.priority === 'number' ? { priority: atom.priority } : {}),
+    ...(atom.durability !== DURABILITY_DEFAULT ? { durability: atom.durability } : {}),
+    ...(atom.source ? { source: atom.source } : {}),
+    ...(atom.retrievedAt ? { retrievedAt: atom.retrievedAt } : {}),
+    ...(atom.validUntil ? { validUntil: atom.validUntil } : {}),
     ...(atom.link ? { link: atom.link } : {}),
     ...(atom.linkLabel ? { linkLabel: atom.linkLabel } : {}),
     body: atom.body,
@@ -146,6 +155,14 @@ export function serializeAtom(atom: CompiledAtom): string {
   if (atom.summary !== '') emitScalar('summary', atom.summary, lines)
   if (atom.alwaysInclude) lines.push('alwaysInclude: true')
   if (typeof atom.priority === 'number') lines.push(`priority: ${atom.priority}`)
+  if (atom.durability && atom.durability !== DURABILITY_DEFAULT) {
+    lines.push(`durability: ${atom.durability}`)
+  }
+  if (atom.source) emitScalar('source', atom.source, lines)
+  // Dates are always emitted quoted: unquoted, a stricter YAML parser reads
+  // them as Dates, and the round trip would then depend on whose parser ran.
+  if (atom.retrievedAt) lines.push(`retrievedAt: "${atom.retrievedAt}"`)
+  if (atom.validUntil) lines.push(`validUntil: "${atom.validUntil}"`)
   if (atom.link) lines.push(`link: ${atom.link}`)
   if (atom.linkLabel) emitScalar('linkLabel', atom.linkLabel, lines)
   for (const [key, value] of Object.entries(atom.extensions ?? {})) {

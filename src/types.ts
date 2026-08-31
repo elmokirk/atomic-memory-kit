@@ -42,6 +42,17 @@ export interface MemoryAtom {
   synonyms: string[]
   /** Raw `priority` frontmatter value, preserved verbatim for round-tripping. */
   priority?: number
+  /**
+   * How long this stays true. Only two values can ever be loaded — `volatile`
+   * is refused at the gate, so no atom in a base carries it.
+   */
+  durability: 'fixed' | 'stable'
+  /** Where a claim came from: a URL, or free text for offline provenance. */
+  source?: string
+  /** ISO date the source was last checked. */
+  retrievedAt?: string
+  /** ISO date after which this atom is suspect. Produces a gap, never a deletion. */
+  validUntil?: string
   /** Bonus added to every score of this atom (`priority: 100` => +1, `-100` => -1). */
   priorityBonus: number
   /** Optional deep link to a canonical surface covering this atom. */

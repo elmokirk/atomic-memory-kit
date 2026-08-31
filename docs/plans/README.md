@@ -9,7 +9,7 @@ filtering already happened and is not re-litigated per release.
 
 | Release | Theme | Contract | Status |
 |---|---|---|---|
-| [0.3.0](0.3.0-durability-and-provenance.md) | Durability & provenance | **1.1.0** | planned |
+| [0.3.0](0.3.0-durability-and-provenance.md) | Durability & provenance | **1.1.0** | **shipped** |
 | [0.4.0](0.4.0-scopes.md) | Scopes | 1.1.0 | planned |
 | [0.5.0](0.5.0-escalation.md) | Two-stage retrieval | 1.1.0 | planned |
 | [0.6.0](0.6.0-audit.md) | The audit pass | 1.1.0 | planned |

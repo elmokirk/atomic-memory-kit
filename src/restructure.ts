@@ -25,7 +25,7 @@
  */
 import { pathForId, serializeAtom } from './compile.ts'
 import type { CompiledAtom } from './compile.ts'
-import { GRAMMAR } from './contract.ts'
+import { DURABILITY_DEFAULT, GRAMMAR } from './contract.ts'
 import { loadMemory } from './loader.ts'
 import { validateAtom } from './schema.ts'
 import type { ValidationIssue } from './schema.ts'
@@ -47,6 +47,10 @@ export interface AtomProposal {
   related?: string[]
   alwaysInclude?: boolean
   priority?: number
+  durability?: string
+  source?: string
+  retrievedAt?: string
+  validUntil?: string
   link?: string
   linkLabel?: string
   extensions?: Record<string, unknown>
@@ -93,6 +97,10 @@ function toCompiled(proposal: AtomProposal): CompiledAtom {
     related: proposal.related ?? [],
     alwaysInclude: proposal.alwaysInclude ?? false,
     priority: proposal.priority,
+    durability: proposal.durability,
+    source: proposal.source,
+    retrievedAt: proposal.retrievedAt,
+    validUntil: proposal.validUntil,
     link: proposal.link,
     linkLabel: proposal.linkLabel,
     extensions: proposal.extensions ?? {},
@@ -114,6 +122,10 @@ function frontmatterOf(proposal: AtomProposal): Record<string, unknown> {
   if (proposal.related !== undefined) data.related = proposal.related
   if (proposal.alwaysInclude !== undefined) data.alwaysInclude = proposal.alwaysInclude
   if (proposal.priority !== undefined) data.priority = proposal.priority
+  if (proposal.durability !== undefined) data.durability = proposal.durability
+  if (proposal.source !== undefined) data.source = proposal.source
+  if (proposal.retrievedAt !== undefined) data.retrievedAt = proposal.retrievedAt
+  if (proposal.validUntil !== undefined) data.validUntil = proposal.validUntil
   if (proposal.link !== undefined) data.link = proposal.link
   if (proposal.linkLabel !== undefined) data.linkLabel = proposal.linkLabel
   return data
@@ -184,6 +196,10 @@ export function planApply(
         related: existing.related,
         alwaysInclude: existing.alwaysInclude,
         priority: existing.priority,
+        durability: existing.durability,
+        source: existing.source,
+        retrievedAt: existing.retrievedAt,
+        validUntil: existing.validUntil,
         link: existing.link,
         linkLabel: existing.linkLabel,
         body: existing.body.trim(),
@@ -199,6 +215,10 @@ export function planApply(
         related: proposal.related,
         alwaysInclude: proposal.alwaysInclude ?? false,
         priority: proposal.priority,
+        durability: proposal.durability ?? DURABILITY_DEFAULT,
+        source: proposal.source,
+        retrievedAt: proposal.retrievedAt,
+        validUntil: proposal.validUntil,
         link: proposal.link,
         linkLabel: proposal.linkLabel,
         body: proposal.body.trim(),

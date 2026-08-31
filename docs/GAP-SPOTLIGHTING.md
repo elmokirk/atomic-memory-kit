@@ -6,7 +6,7 @@ Conceptual background: [`../CONCEPT.md`](../CONCEPT.md) §4.
 
 ---
 
-## The six detectors
+## The seven detectors
 
 | Kind | Question it answers | Cooperation needed | Where |
 |---|---|---|---|
@@ -16,6 +16,7 @@ Conceptual background: [`../CONCEPT.md`](../CONCEPT.md) §4.
 | `drift` | "Do we agree with the source of truth?" | claims map | `drift.ts` |
 | `todo` | "Did the author know it was incomplete?" | author marker | `gaps.ts` |
 | `cycle` / `orphan` | "Is the graph degrading?" | none | `loader.ts` |
+| `expiry` | "Is this still true, or just still here?" | `validUntil` on the atom | `expiry.ts` |
 
 ---
 
@@ -192,6 +193,55 @@ Latent gaps rather than observed ones.
   (A↔B) are fine and not reported.
 - **`orphan`** — an atom with no edges in or out. Usually means either the graph
   is incomplete or the atom does not belong.
+
+---
+
+## 6. Expiry — knowledge that aged out
+
+The other six detectors ask whether something is missing. This one asks whether
+something present has quietly stopped being true.
+
+An atom that declares `validUntil` is making a prediction about its own shelf
+life. Once that date passes, the atom is *suspect* — and suspect is a gap:
+
+```yaml
+source: https://example.org/gdpr-logging-guidance
+retrievedAt: "2026-02-01"
+validUntil: "2026-08-01"
+```
+
+```bash
+amk expiring              # everything already stale
+amk expiring --within 30  # plus what goes stale in the next 30 days
+```
+
+```
+expiring — already expired
+  error research.gdpr-retention      2026-08-01  (expired 30d ago)
+    re-check: https://example.org/gdpr-logging-guidance
+
+  1 expiry gap(s) recorded. Nothing was deleted.
+```
+
+Three decisions worth knowing:
+
+- **Nothing is deleted, hidden or down-ranked.** An expired atom keeps serving
+  exactly as it did the day before. Silent removal is the same failure as silent
+  truncation — the system gets quieter about what it does not know. An
+  expired-but-visible atom beats an absent one every time, and the gap is what
+  makes it visible.
+- **Gaps only for atoms genuinely past the date.** `amk expiring --within N`
+  looks ahead so you can act early; a *gap* means "this needs attention now". An
+  atom whose last valid day is today has nothing missing about it.
+- **The `source` rides along in the gap detail**, so a research agent can close
+  it without a second lookup. That is the difference between a gap that gets
+  closed and one that gets read.
+
+Two things this detector does not do: it cannot tell you whether an *unexpired*
+atom is still true, and it will never invent a `validUntil` for you. An atom
+with `source` but no `validUntil` is knowledge that claims it can never go
+stale — `findUnboundedProvenance()` lists them so you can decide whether that
+was a claim you meant to make.
 
 ---
 
