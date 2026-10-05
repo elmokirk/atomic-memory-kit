@@ -6,22 +6,22 @@ Planning revision: 2026-10-05 (roadmap and positioning revised; first written 20
 
 | Task | Document |
 |---|---|
+| Understand what the product is for and how it is positioned | [`PRODUCT.md`](../../PRODUCT.md) |
 | Execute an assigned batch | [Agent handoff](AGENT-HANDOFF.md) |
 | Understand priorities and phase boundaries | [Roadmap](ROADMAP.md) |
 | Preserve the core and add optional capabilities | [Architecture](ARCHITECTURE.md) |
-| Understand the target user and honest product claim | [Positioning](POSITIONING.md) |
 | Run gates or prepare a human test | [QA](QA.md) |
 | Verify an external assumption | [Sources](SOURCES.md) |
 | Reproduce audit findings | [Red-team register](reviews/RED-TEAM.md) |
 | See why the plan changed on 2026-10-05 | [Plan review](reviews/PLAN-REVIEW-2026-10-05.md) |
 | Start foundation work after authorization | [B0: foundation](batches/B0-foundation.md) |
-| Build the first working integration after B0 | [B1: agent companion](batches/B1-agent-companion.md) |
+| Earlier companion batch (withdrawn) | [B1: agent companion](batches/B1-agent-companion.md) |
 
 ## Product direction
 
 Keep AMK as a small, inspectable knowledge engine that works standalone. Add read-only adapters that audit other memory stores, and a companion that makes corrections traceable and tests whether they work on later questions. Keep native episodic memory in place.
 
-Security fixes come first. The initial demonstration is a Claude Code plugin whose read-only audit of auto memory leads into a reviewed correction loop with replay. GBrain is a comparator, not an integration target. Pi, Hermes, Mem0 and OpenViking are unscheduled. The [plan review](reviews/PLAN-REVIEW-2026-10-05.md) records why. No acquisition, standard adoption, accuracy improvement, or commercial return is assumed. The local release train in [`docs/plans/`](../plans/README.md) is parked; see [Roadmap](ROADMAP.md).
+Since 2026-10-05, [`PRODUCT.md`](../../PRODUCT.md) defines the product: a retrieval engine for chatbots on curated knowledge, plus an add-on that gives existing memory systems (first Mem0) missed-retrieval tracking, regression tests and write validation. No competing memory product. Security and chatbot-correctness fixes come first. No acquisition, standard adoption, accuracy improvement, or commercial return is assumed. The local release train in [`docs/plans/`](../plans/README.md) is parked; see [Roadmap](ROADMAP.md).
 
 ## Baselines and status ownership
 

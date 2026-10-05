@@ -1,5 +1,7 @@
 # B1: a working agent companion
 
+**Withdrawn 2026-10-05.** [`PRODUCT.md`](../../../PRODUCT.md) rules out a Claude Code companion product. Kept as a record; do not assign. A Claude Code memory adapter, if ever built, is planned fresh under [the roadmap](../ROADMAP.md) "Later".
+
 Outcome: audit Claude Code auto memory read-only, then demonstrate a complete, reviewed knowledge correction in Claude Code, retaining native memory. The Pi reference (T04) is optional since 2026-10-05; it runs only if the owner's Pi chatbot is in active use.
 
 Entry gate: for T00 and a read-only T02, roadmap Phase 1 items 1, 2 and 7 are done; for every write path, B0 is accepted. In both cases the owner assigns the work. Read [Architecture](../ARCHITECTURE.md) and check host references in [Sources](../SOURCES.md). Actual installed Claude/Pi versions and the private chatbot integration point are not yet known.

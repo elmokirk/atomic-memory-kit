@@ -116,7 +116,7 @@ quoting.**
 
 ## 7. Memory systems targeted by adapters
 
-*Retrieved 2026-10-05.* Basis of the adapter phases in
+*Retrieved 2026-10-05.* Basis of [`PRODUCT.md`](PRODUCT.md) §5 and the adapter phases in
 [`docs/strategy/ROADMAP.md`](docs/strategy/ROADMAP.md). Nothing here has been
 integration-tested yet.
 
@@ -135,6 +135,11 @@ integration-tested yet.
 | `cc-memory-view` (MIT) audits Claude Code auto memory read-only: missing index, missing files, unlisted files, broken links, stale entries | community | [yokonao/cc-memory-view](https://github.com/yokonao/cc-memory-view) | POSITIONING |
 | `memory-hygiene` audits and cleans Claude Code memory, including `MEMORY.md` | community | [wan-huiyan/memory-hygiene](https://github.com/wan-huiyan/memory-hygiene) | POSITIONING |
 | Run-to-run noise in agent-memory evaluations is large (a figure near 30% is reported) | community, not verified by the author | [Taskade write-up](https://www.taskade.com/blog/agent-memory-negative-results) | ROADMAP Phase 3 (repeated runs) |
+| Intercom Fin has an unresolved-questions report, grouped by topic, needing at least 10 unresolved conversations a month; being replaced by an Optimize dashboard | docs | [Intercom help](https://www.intercom.com/help/en/articles/8890980-dig-into-fin-ai-agent-unresolved-questions) | PRODUCT §5 |
+| Chatbase flags questions its agent cannot answer ("Suggestions"), reported as limited to its top plan | vendor, plan detail via search summary | [Chatbase accuracy guide](https://www.chatbase.co/blog/improve-ai-chatbot-accuracy) · [Chatbase analytics docs](https://www.chatbase.co/docs/user-guides/chatbot/analytics) | PRODUCT §5 |
+| Mem0 is Apache-2.0; its memory-evaluation page is a benchmark plus self-run evaluation and describes no tracking of searches that returned nothing | docs | [Mem0 repository](https://github.com/mem0ai/mem0) · [Memory evaluation](https://docs.mem0.ai/core-concepts/memory-evaluation) | PRODUCT §6, ROADMAP Phase 3 (re-check on the pinned version) |
+| `search()` returns an empty list silently on no match | community | [theneuralbase tutorial](https://theneuralbase.com/mem0/learn/beginner/when-search-returns-nothing/) | ROADMAP Phase 3 |
+| Honcho is AGPL-3.0 and ships its own Claude Code plugin (`claude-honcho`, MIT) | docs | [Honcho](https://github.com/plastic-labs/honcho) · [claude-honcho](https://github.com/plastic-labs/claude-honcho) | PRODUCT §6 |
 | Node refuses to strip types from TypeScript files under a `node_modules` path | docs | [Node.js TypeScript](https://nodejs.org/api/typescript.html) | ROADMAP Phase 1 (B0-T07) |
 | Type stripping is on by default from v22.18.0 and v23.6.0 | docs | [Node.js TypeScript](https://nodejs.org/api/typescript.html), history table | ROADMAP Phase 1 (`engines` floor) |
 | OpenViking is a context database exposing `viking://` URIs, L0/L1/L2 tiers, an HTTP API on port 1933 and SDKs; core licensed AGPLv3 | docs | [OpenViking repository](https://github.com/volcengine/OpenViking) · [Sessions API](https://docs.openviking.ai/en/api/05-sessions) | ROADMAP, deferred |

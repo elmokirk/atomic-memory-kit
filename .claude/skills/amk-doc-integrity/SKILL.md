@@ -16,6 +16,7 @@ looks plausible for everything.
 
 | File | Owns | Does **not** own |
 |---|---|---|
+| `PRODUCT.md` | Purpose, use cases, market positioning, derived requirements. Decides scope | Normative atom rules, release ordering |
 | `CONCEPT.md` | Implementation-independent ideas. Ports to a Python rewrite. | Anything about our code, our CLI, our API |
 | `CONTRACT.md` | Normative rules for atoms. RFC 2119 keywords. | Rationale beyond one line, tutorials |
 | `LIMITATIONS.md` | Every way this is wrong, weak, or refuses to help | Apologies, roadmap, "coming soon" |

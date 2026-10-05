@@ -21,6 +21,7 @@
     "cli",
     "agent",
     "docs",
+    "PRODUCT.md",
     "CONCEPT.md",
     "CONTRACT.md",
     "LIMITATIONS.md",

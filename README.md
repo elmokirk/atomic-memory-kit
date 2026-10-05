@@ -13,7 +13,8 @@ atoms/ ──compile──► one bundle (+ open gaps) ──► human edits ─
    └────────────────────── validate: contract + graph ─────────────────────────┘
 ```
 
-- **The concept** — [`CONCEPT.md`](CONCEPT.md). Portable, implementation-independent. Start here.
+- **What it is for** — [`PRODUCT.md`](PRODUCT.md). Chatbots on curated knowledge, and an add-on for existing memory systems. Start here.
+- **The concept** — [`CONCEPT.md`](CONCEPT.md). Portable, implementation-independent.
 - **The limits** — [`LIMITATIONS.md`](LIMITATIONS.md). Read before adopting.
 - **The rules** — [`CONTRACT.md`](CONTRACT.md). Contract `1.1.0`: dependencies, core rules, conformance levels.
 - **The server** — [`docs/MCP.md`](docs/MCP.md). Stateless MCP, revision `2026-07-28`.

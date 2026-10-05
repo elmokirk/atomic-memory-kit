@@ -1,6 +1,6 @@
 # Developing Atomic Memory Kit
 
-For an assigned implementation task, read [the execution handoff](docs/strategy/AGENT-HANDOFF.md), then the assigned batch. For product scope or sequencing, read [the roadmap](docs/strategy/ROADMAP.md). For existing technical documentation, use [the documentation map](docs/README.md).
+For an assigned implementation task, read [the execution handoff](docs/strategy/AGENT-HANDOFF.md), then the assigned batch. For product scope, read [PRODUCT.md](PRODUCT.md); for sequencing, [the roadmap](docs/strategy/ROADMAP.md). For existing technical documentation, use [the documentation map](docs/README.md).
 
 ## Boundaries
 

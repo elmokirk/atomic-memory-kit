@@ -15,7 +15,7 @@ filtering already happened and is not re-litigated per release.
 | [0.6.0](0.6.0-audit.md) | The audit pass | 1.1.0 | parked |
 | [1.0.0](1.0.0-freeze.md) | Freeze & conformance | **1.1.0 frozen** | parked |
 
-**Parked 2026-10-05.** Sequencing now follows [`docs/strategy/ROADMAP.md`](../strategy/ROADMAP.md): foundation fixes, a read-only audit of Claude Code memory, and a reviewed correction loop come first. The plans below stay valid as designs and are revisited after the correction loop ships, with real audit findings as input. Nothing in them is cancelled.
+**Parked 2026-10-05.** Scope now follows [`PRODUCT.md`](../../PRODUCT.md) and sequencing [`docs/strategy/ROADMAP.md`](../strategy/ROADMAP.md): chatbot-ready core, a chatbot integration path, and a Mem0 adapter come first. The plans below stay valid as designs and are revisited when a deployment asks for scopes or escalation. Nothing in them is cancelled.
 
 ## Why this order
 

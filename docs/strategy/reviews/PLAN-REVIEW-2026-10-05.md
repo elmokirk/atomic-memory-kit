@@ -30,6 +30,8 @@ Author spot checks: auto-memory frontmatter shapes on the owner's machine (18 fi
 
 ## Market verdict
 
+*Later the same day, [`PRODUCT.md`](../../../PRODUCT.md) replaced the positioning below with a chatbot-first product plus adapters for existing memory systems. The market facts remain valid.*
+
 A read-only memory audit is a commodity: `cc-memory-view`, `memory-hygiene`, several CLAUDE.md linters, and Anthropic's own `/doctor prompt-audit` for instruction files. The correction-to-reviewed-fact-to-replay loop has no packaged equivalent that the review found; the nearest items are an issue thread and a paper. Demand evidence is weak: the comparable tools have almost no stars. The realistic first user is a solo or small-team Claude Code power user, or a consultant who keeps repeating the same correction to an agent, not an enterprise buyer.
 
 Positioning adopted from the review: *AMK turns the corrections you keep repeating to your coding agent into reviewed, sourced facts, and checks with a replayed question whether the agent now gets them right.*

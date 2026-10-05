@@ -3,6 +3,7 @@
 Atomic Memory Kit. Zero dependencies, no build step, Node ≥ 22.6 native type
 stripping. `npm test` must stay green.
 
+Read [`PRODUCT.md`](PRODUCT.md) for what this is for and what is out of scope.
 Read [`CONCEPT.md`](CONCEPT.md) before substantial work. It is the portable
 artifact this project exists to produce; the code is the perishable part.
 
