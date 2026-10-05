@@ -31,15 +31,15 @@ analysis is right and this page is stale.
 
 ## What this project does better
 
-Four things. Only the first is new in the world.
+Four things. Only the first has no equivalent in the Anthropic stack this page compares against. Outside it, GBrain ships a gap analysis in its synthesis mode (see [`LINKMAP.md`](LINKMAP.md) §7); the difference is that AMK's ledger is deterministic, counted, and reopens on recurrence.
 
 **1. Not-knowing becomes a record.** Follow a miss through the stack: the model
 finds nothing, answers from general knowledge, the turn ends, context editing
 clears the tool result. Nothing persists. The same question next week produces
 the same miss, and no artifact anywhere counted to two. Context editing and
 compaction are *information-destroying operations that never ask whether what
-they are destroying was a hole.* The gap ledger is the only part of this project
-without an equivalent somewhere else.
+they are destroying was a hole.* Within the Anthropic stack, the gap ledger is the
+only part of this project without an equivalent.
 
 **2. The write path can fail loudly.** An agent cannot write an invalid memory
 through `planApply` or the memory-tool bridge, no matter what it proposes. With

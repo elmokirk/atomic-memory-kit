@@ -2,7 +2,7 @@
 
 Outcome: audit Claude Code auto memory read-only, then demonstrate a complete, reviewed knowledge correction in Claude Code, retaining native memory. The Pi reference (T04) is optional since 2026-10-05; it runs only if the owner's Pi chatbot is in active use.
 
-Entry gate: B0 is accepted for the used read/write paths and the owner assigns B1. Read [Architecture](../ARCHITECTURE.md) and check host references in [Sources](../SOURCES.md). Actual installed Claude/Pi versions and the private chatbot integration point are not yet known.
+Entry gate: for T00 and a read-only T02, roadmap Phase 1 items 1, 2 and 7 are done; for every write path, B0 is accepted. In both cases the owner assigns the work. Read [Architecture](../ARCHITECTURE.md) and check host references in [Sources](../SOURCES.md). Actual installed Claude/Pi versions and the private chatbot integration point are not yet known.
 
 Non-goals: replacing Claude Code auto-memory, intercepting undocumented host internals, mandatory second-model retrieval, temporal platform, autonomous personality inference, Hermes implementation, and hosted sync.
 
@@ -22,7 +22,7 @@ Non-goals: replacing Claude Code auto-memory, intercepting undocumented host int
 
 Scope: a new adapter that reads an auto-memory directory, an `amk audit` command, tests with synthetic memory directories, and the docs listed in the [roadmap](../ROADMAP.md) Phase 2. No writes to the audited directory.
 
-Implement the checks listed in the roadmap. Parse the auto-memory frontmatter in the adapter rather than through the atom loader, which rejects the nested `metadata` map by design. Report findings in the gap ledger's shape where that fits. Never read outside the given directory.
+Implement the checks listed in the roadmap. Parse the auto-memory frontmatter in the adapter rather than through the atom loader, which rejects nested maps by design. Accept both shapes seen in practice: flat `type:` and a nested `metadata:` block, plus unknown extra fields. Resolve the directory honouring `autoMemoryDirectory` and `CLAUDE_CODE_PROJECT_DIR_NAME`, and accept an explicit path. Only the five deterministic checks in the roadmap are in scope. Report findings in the gap ledger's shape where that fits. Never read outside the given directory.
 
 Acceptance: each check has a fixture that triggers it and one that does not; the audited directory is byte-identical before and after; a real run on the owner's memory directory produces findings the owner confirms as correct or incorrect; LIMITATIONS lists what the audit cannot see (meaning, truth, memories outside the directory).
 
@@ -81,8 +81,8 @@ After T01 freezes the application contract, Claude packaging and Pi reference wo
 ## Success and exit checklist
 
 - [ ] Claude companion completes the documented correction loop in real sessions.
-- [ ] Pi reference runs, and private-agent acceptance is separately labeled.
-- [ ] At least three corrections have original and held-out replay evidence.
+- [ ] If T04 ran: Pi reference runs, and private-agent acceptance is separately labeled.
+- [ ] At least three corrections have original and held-out replay evidence from repeated runs, with pass counts and spread per condition (AMK, native memory, GBrain).
 - [ ] Native memory and unrelated configuration remain intact.
 - [ ] Invocation, cost/latency overhead, and maintenance effort are measured.
 - [ ] All critical negative cases and the B0 regression gate pass.

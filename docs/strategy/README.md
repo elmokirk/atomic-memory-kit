@@ -13,6 +13,7 @@ Planning revision: 2026-10-05 (roadmap and positioning revised; first written 20
 | Run gates or prepare a human test | [QA](QA.md) |
 | Verify an external assumption | [Sources](SOURCES.md) |
 | Reproduce audit findings | [Red-team register](reviews/RED-TEAM.md) |
+| See why the plan changed on 2026-10-05 | [Plan review](reviews/PLAN-REVIEW-2026-10-05.md) |
 | Start foundation work after authorization | [B0: foundation](batches/B0-foundation.md) |
 | Build the first working integration after B0 | [B1: agent companion](batches/B1-agent-companion.md) |
 
@@ -20,7 +21,7 @@ Planning revision: 2026-10-05 (roadmap and positioning revised; first written 20
 
 Keep AMK as a small, inspectable knowledge engine that works standalone. Add read-only adapters that audit other memory stores, and a companion that makes corrections traceable and tests whether they work on later questions. Keep native episodic memory in place.
 
-The initial demonstration is an audit of Claude Code auto memory, followed by a reviewed correction loop in Claude Code. GBrain follows if a Markdown export is available. Pi, Hermes, Mem0 and OpenViking are unscheduled. No acquisition, standard adoption, accuracy improvement, or commercial return is assumed. The local release train in [`docs/plans/`](../plans/README.md) is parked; see [Roadmap](ROADMAP.md).
+Security fixes come first. The initial demonstration is a Claude Code plugin whose read-only audit of auto memory leads into a reviewed correction loop with replay. GBrain is a comparator, not an integration target. Pi, Hermes, Mem0 and OpenViking are unscheduled. The [plan review](reviews/PLAN-REVIEW-2026-10-05.md) records why. No acquisition, standard adoption, accuracy improvement, or commercial return is assumed. The local release train in [`docs/plans/`](../plans/README.md) is parked; see [Roadmap](ROADMAP.md).
 
 ## Baselines and status ownership
 

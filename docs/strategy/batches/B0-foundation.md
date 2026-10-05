@@ -4,7 +4,7 @@ Outcome: preserve the starter while making installation, representation, measure
 
 Entry gate: the owner assigns implementation of B0; inspect the current checkout and [red-team register](../reviews/RED-TEAM.md). Documentation approval is not that assignment. Full-suite and live-host results from the earlier review are unavailable.
 
-Scope note, 2026-10-05: B0-T07 is reduced by the [roadmap](../ROADMAP.md) Phase 1. Registry distribution is deferred, the first companion ships as a Claude Code plugin, and the `engines` floor moves to 22.18.0. Typechecking stays optional. T01 records the current `master` head as baseline, which includes contract 1.1.0.
+Scope note, 2026-10-05: the [roadmap](../ROADMAP.md) Phase 1 list overrides the ticket bodies below where they differ. Order: R16 first, then confinement (including `src/memory-tool.ts`), ledger corruption, history zero, stream decoder, evaluator, starter hygiene, Node floor. Deferred: npm packaging, tarball tests and typechecking (T07 shrinks to the Node floor and a startup version check); multi-file atomicity is documented as a limit; stale-base checks move to B1-T03. Installed-artifact checks in T08 and the exit checklist mean a plugin install from the repository marketplace. T01 records the current `master` head as baseline, which includes contract 1.1.0.
 
 Non-goals: new ranking algorithms, temporal features, Hermes plugin, hosted service, full benchmark framework, and mass refactoring.
 
@@ -96,7 +96,7 @@ After T01, T02, T03, T04, and T07 can proceed with agreed ownership. T05 depends
 - [ ] T01-T08 acceptance evidence is linked in the state table.
 - [ ] All required deterministic safety/compatibility cases pass.
 - [ ] Full regression run uses actual project modules, not copied snippets.
-- [ ] Installed-package smoke test passes on the declared runtime matrix.
+- [ ] Plugin install from the repository marketplace starts the read-only MCP server on the declared Node floor and a current release.
 - [ ] The original starter remains minimal and usable.
 - [ ] User acceptance and the shared definition of done are satisfied.
 - [ ] B1 is proposed for assignment; no automatic feature continuation or merge occurs.

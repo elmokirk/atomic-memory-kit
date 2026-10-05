@@ -37,7 +37,7 @@ node ../cli/amk.mjs search "what does it cost"
 
 An expected planted drift or TODO must be distinguished from a regression. On a Node version that requires a type-stripping flag, record that fact; do not silently change the environment and claim the original requirement passed.
 
-B0 must establish a reproducible check command, typecheck, and package smoke test. Those scripts do not exist merely because this document requests them. Verify the declared minimum runtime and a current supported runtime, without unbounded latest-version dependencies.
+B0 must establish a reproducible check command and a plugin install smoke test; typecheck and package tests are deferred with npm (roadmap, 2026-10-05). Those scripts do not exist merely because this document requests them. Verify the declared minimum runtime and a current supported runtime, without unbounded latest-version dependencies.
 
 ## Mandatory regression families
 
@@ -45,7 +45,7 @@ B0 must establish a reproducible check command, typecheck, and package smoke tes
 2. **Retrieval:** hard negatives, empty queries, history count zero, context-only boosts, deterministic order, entire-context budget, always-include content and edges.
 3. **Evaluation:** metrics stay in range, exact expected IDs, forbidden IDs fail independently, zero-case semantics, regression comparison without auto-updating baselines.
 4. **Writes:** validation precedes mutation; stale plan rejected; confinement including symlinks; partial failure and restart behavior; ledger corruption visible; distinct observations survive permitted concurrency.
-5. **Transport/distribution:** installed tarball import and CLI, runtime matrix, JSON-RPC invalid input, negotiated version, tool-list consistency, stdio-only operation or explicitly secured HTTP.
+5. **Transport/distribution:** installed plugin (tarball only once npm is in scope), runtime matrix, JSON-RPC invalid input, negotiated version, tool-list consistency, stdio-only operation or explicitly secured HTTP.
 6. **Streaming:** split markers at every relevant boundary, multiple distant markers, long deltas, end-of-stream incomplete marker, no whitespace loss in ordinary output.
 
 ## B1 user script

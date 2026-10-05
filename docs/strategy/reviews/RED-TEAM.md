@@ -25,7 +25,7 @@ The preceding review used source inspection and reported 19 synthetic probes aga
 | Symlink escapes read/write root | R13 | Demonstrated with sandbox-owned symlink and sentinel | B0-T05 |
 | Parent path accepted by exported writer | R14 | Direct adapter API only; not every CLI/MCP call proven reachable | B0-T05 |
 | Corrupt ledger line silently skipped | R15 | Invisible evidence loss | B0-T05 |
-| HTTP `listen(port)` binds wildcard | R16 | Isolated Node pattern; full server not launched | B0-T06 |
+| HTTP `listen(port)` binds wildcard | R16 | Reproduced 2026-10-05 on the full server: listens on `0.0.0.0` and `[::]`, log prints `127.0.0.1`, token off by default, `memory_apply` writes. Highest priority | B0-T06 |
 | Raw `.ts` package import fails under node_modules | R17 | Isolated installed-path pattern, not actual AMK tarball | B0-T07 |
 | Bare TS import fails within declared Node range | R18 | Observed on Node 22.16.0 without required flag | B0-T07 |
 | Config defaults share mutable arrays/maps | R19 | Aliasing if callers mutate returned config | B0-T03 |
@@ -34,6 +34,8 @@ The preceding review used source inspection and reported 19 synthetic probes aga
 | CLI and MCP resolve relative roots differently | S03 | Wrong root when launched from another directory | B0-T05 |
 | Tool catalog and integration README diverge | S04 | Documentation can describe unavailable operations | B0-T06 |
 | Scope miss described as proven absence; recurrence as people count | S05 | Product claims exceed evidence | B0-T06, B1-T03 |
+| `src/memory-tool.ts` path resolution never reviewed | S06 | Added after baseline `af24e19`; same confinement questions as R13/R14 | B0-T05 |
+| `drift` exits 0 on an error finding; `eval` modifies tracked `example/.memory-out/gaps.jsonl` | S07 | Found walking the quickstart, 2026-10-05 | B0-T08 |
 
 ## Source locations
 

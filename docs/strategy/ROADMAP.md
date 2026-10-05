@@ -1,24 +1,24 @@
 # Roadmap and priority decisions
 
-Planning revision: 2026-10-05. This revision replaces the 2026-09-26 batch order with a phase order, and parks the local release train in [`docs/plans/`](../plans/README.md) (0.4.0 to 1.0.0). Priorities are product decisions, not measured scores. Ticket state lives only in batch documents.
+Planning revision: 2026-10-05, second pass after an independent review ([PLAN-REVIEW-2026-10-05](reviews/PLAN-REVIEW-2026-10-05.md)). This revision replaces the 2026-09-26 batch order with a phase order, and parks the local release train in [`docs/plans/`](../plans/README.md) (0.4.0 to 1.0.0). Priorities are product decisions, not measured scores. Ticket state lives only in batch documents.
 
 ## Target picture
 
-> AMK checks and hardens what agents believe they know, whether that knowledge lives in AMK itself, in Claude Code auto memory, or in a Markdown brain such as GBrain. It reports what is missing or wrong, and proves that a correction works on a later question.
+> AMK turns the corrections you keep repeating to your coding agent into reviewed, sourced facts, and checks with a replayed question whether the agent now gets them right.
 
-AMK runs **standalone first**: its own atoms, CLI and MCP server, no other memory system required. Adapters read other stores so the same checks apply to them. Adapters are a distribution channel; the checks are the product. See [Positioning](POSITIONING.md).
+AMK runs **standalone first**: its own atoms, CLI and MCP server, no other memory system required. A read-only audit of Claude Code auto memory is the entry point that shows where corrections are needed; it is a hook, not the product. Similar audits already exist (see [Positioning](POSITIONING.md)). What nobody packages yet is the loop from correction to reviewed fact to replay.
 
 ## Goals
 
 | # | Goal | Done when |
 |---|---|---|
-| G1 | **Audit.** AMK reads a native memory store read-only and reports concrete defects | `amk audit` on a real Claude Code memory directory produces reproducible findings |
-| G2 | **Reviewed promotion.** A correction becomes a validated, sourced atom | Three correction cases pass replay on the original and a held-out question |
-| G3 | **Install in under five minutes**, removable without residue | Two outside developers manage it without help |
+| G1 | **Safe to run.** No AMK surface exposes writes beyond the local user | HTTP binds to loopback by default; writes over HTTP need a token; path escapes are refused, each with a test |
+| G2 | **Correction loop.** A correction becomes a validated, sourced atom and is replayed | At least three correction cases, each replayed repeatedly on the original and a held-out question, with pass counts and run-to-run variance reported |
+| G3 | **Install in under five minutes**, removable without residue | Two outside developers install the plugin and remove it without help |
 | G4 | **Credible open source.** Limits documented, no unbacked claims | Red-team findings closed or documented; claims ledger published |
 | G5 | **Enterprise only on demand** | A paid pilot exists before the first enterprise feature |
 
-Non-goals until a phase gate says otherwise: own vector store, embeddings, hosted service, two-way sync, writing into another system's store, replacing or intercepting native memory, Mem0/Hermes/Pi/OpenViking integrations, and the parked 0.4.0 to 1.0.0 features (scopes, escalation, audit pass, freeze).
+Non-goals until a phase gate says otherwise: own vector store, embeddings, hosted service, two-way sync, writing into another system's store, replacing or intercepting native memory, an npm package, Mem0/Hermes/Pi/OpenViking integrations, a GBrain audit adapter, and the parked 0.4.0 to 1.0.0 features (scopes, escalation, audit pass, freeze).
 
 ## Phases
 
@@ -26,41 +26,52 @@ Effort is an estimate for one owner working with coding agents, including the do
 
 | Phase | Content | Estimate | Gate | Batch |
 |---|---|---|---|---|
-| 0. Housekeeping | Local commits pushed, strategy merged, obsolete branches removed, this plan written | done 2026-10-05 | One plan on `master` | – |
-| 1. Foundation | Reduced B0: fix the red-team findings that sit on the released path | 4-6 days | Every finding reproduced by a real-module test and fixed, or documented as a limit | [B0](batches/B0-foundation.md) |
-| 2. Claude Code memory audit | Read-only adapter for the auto-memory directory plus `amk audit`; Claude Code plugin around the existing MCP server | 4-5 days | Demo: audit of the owner's own auto memory | [B1](batches/B1-agent-companion.md) T00, T02 |
-| 3. Correction loop | Promote a reviewed entry into a sourced atom, replay it in a new session; rejection writes nothing | 4-5 days | G2 and the owner's user test | [B1](batches/B1-agent-companion.md) T03, T05, T06 |
-| 4. GBrain, read-only | Same audit over a GBrain Markdown export | 2-4 days | Entry only if a Markdown export of the owner's brain exists on disk; otherwise skipped | not ticketed |
-| 5. Public release | README repositioning, quickstart, claims ledger, two outside installs | 3 days | G3 and G4 | B5 |
-| 6. Enterprise | Sell a pilot first (memory audit and hardening as a service), then build exactly what it requires | demand-led | Signed pilot | B6 |
+| 0. Housekeeping | Local commits pushed, strategy merged, obsolete branches removed, plan written and reviewed | done 2026-10-05 | One reviewed plan on `master` | – |
+| 1. Foundation | Security first, then the confirmed red-team findings and starter hygiene (list below) | 6-8 days | Every listed finding has a real-module test and a fix, or a documented limit | [B0](batches/B0-foundation.md) |
+| 2. Plugin and audit hook | Claude Code plugin from this repository's marketplace, read-only by default; `amk audit` over auto memory | 3-4 days | Owner installs from GitHub, runs the audit on their own memory, removes the plugin | [B1](batches/B1-agent-companion.md) T00, T02 |
+| 3. Correction loop | Reviewed promotion into a sourced atom, stale-proposal rejection, replay in fresh sessions; comparison against native memory and GBrain | 8-10 days | G2 and the owner's user test | [B1](batches/B1-agent-companion.md) T03, T05, T06 |
+| 4. Public release | README rebuilt around a 60-second demo and the plugin install; claims ledger; two outside installs | 3-4 days | G3 and G4 | B5 |
+| 5. Enterprise | Sell a pilot first (memory review and hardening as a service), then build exactly what it requires | demand-led | Signed pilot | B6 |
 
-A credible open-source release is roughly five to seven weeks away. Enterprise work starts no earlier than two to three months after that, and only with a customer.
+A credible open-source release is roughly seven to ten weeks away. Enterprise work starts no earlier than two to three months after that, and only with a customer.
 
 ### Why this order
 
-Phase 2 delivers visible value in week two with nothing external, because the Claude Code auto-memory format is documented and is already close to an atom: one Markdown file per memory, frontmatter, and an index. Phase 4 comes later because GBrain's live store is a database; a Markdown export is the only route that keeps AMK free of a client for someone else's API. OpenViking is deferred: it is not in use, its API is still moving, and its core licence (AGPLv3) needs a review before any enterprise offer touches it.
+A memory server that accepts writes from the network is a worse problem than any missing feature, so security leads Phase 1. The audit comes before the loop because it is cheap, it is the visible first minute of the product, and it shows the owner which corrections to promote. The loop is the headline because it is the only part without a packaged equivalent; it gets the larger budget.
 
-### Phase 1: what is in and out of B0
+GBrain is not an audit target. It ships its own checks (doctor, orphans, schema lint, contradictions, gap analysis in synthesis), and its Markdown repository is canonical. It is a comparator in Phase 3: if GBrain's own workflow already makes a correction stick, AMK's loop has to show what it adds or shrink. OpenViking is deferred: it is not in use, its API is still moving, and its core licence (AGPLv3) needs a review before any enterprise offer touches it.
 
-In: B0-T01 to T06 and T08 as written, limited to the findings in the [red-team register](reviews/RED-TEAM.md).
+### Phase 1: scope
 
-Changed: B0-T07. `npm` distribution is deferred. Node does not strip types from files under `node_modules`, so a registry package needs a build step this project avoids. Phase 2 ships as a Claude Code plugin, which installs outside `node_modules`. The `engines` floor moves from 22.6.0 to 22.18.0, the first 22.x release that strips types without a flag; T01 confirms it on a real install. Typechecking stays optional until a defect shows it is needed.
+In, in this order:
 
-### Phase 2: what the audit checks
+1. **HTTP exposure (R16).** Bind to `127.0.0.1` by default, log the address actually bound, add an explicit host option, refuse mutating tools over HTTP without a token.
+2. **Path confinement (R13, R14)** in `adapters/fs.ts` and in `src/memory-tool.ts`, which postdates the red-team baseline.
+3. **Corrupt ledger lines (R15)** reported, not skipped.
+4. **History zero (R09)** and **gap stream decoder (R01-R03)**.
+5. **Evaluator honesty (R10, R11).**
+6. **Starter hygiene:** `eval` stops modifying tracked files in `example/`; `drift` exits non-zero on an error finding; a root `npm run check` that works from a fresh clone.
+7. **Node floor** to 22.18.0 in `package.json`, README and LIMITATIONS, plus a startup check with a clear message.
 
-The adapter reads the directory; it never writes to it. It does not go through the atom loader, because auto-memory frontmatter nests `metadata.type`, which the atom grammar rejects on purpose.
+Out, moved or documented: npm packaging and tarball tests (deferred with npm); typechecking (optional until a defect needs it); multi-file write atomicity (documented as a limit, per-file writes stay); stale-base checks (moved to Phase 3, where proposals first need them); remaining static findings S01-S05 where they do not touch an enabled path.
+
+### Phase 2: the audit hook
+
+The adapter reads the auto-memory directory and never writes to it. It parses frontmatter itself rather than through the atom loader, which rejects nested maps on purpose. It accepts both shapes seen in practice: a flat `type:` and a nested `metadata:` block holding `type`, plus extra fields such as `modified`. It resolves the directory from the project, honouring `autoMemoryDirectory` and `CLAUDE_CODE_PROJECT_DIR_NAME`, and accepts an explicit path.
 
 | Check | Why it matters |
 |---|---|
-| `MEMORY.md` exceeds 200 lines or 25KB | Content past the limit is not loaded at session start, and nothing tells the user |
-| Topic file not listed in `MEMORY.md` | The memory exists and no session will find it |
+| `MEMORY.md` over 200 lines or 25KB | Content past the limit is not loaded at session start; Claude is told, the user often is not |
+| Topic file not listed in `MEMORY.md` | The memory exists and no session is pointed at it |
 | Index line points at a missing file | The agent is told about knowledge that is gone |
 | `[[link]]` with no matching memory | A dangling edge; AMK's loader refuses these for atoms |
 | Missing or unknown `type`, missing `description` | The index line cannot be judged for relevance |
-| Near-duplicate names or descriptions | Two memories that will drift apart |
-| `project` memory with an absolute date in the past | Candidate for review, reported as information, not as an error |
 
-Output reuses the gap ledger format where it fits, so audit findings and retrieval gaps live in one backlog.
+Near-duplicate and stale-date checks are dropped from this phase: they are heuristics, and the five checks above are deterministic. Findings are printed and can be recorded as gaps; nothing else changes.
+
+### Phase 3: how results are reported
+
+Model answers vary between runs. Each replay question runs several times per condition (AMK, native memory with the same fact, GBrain with the same fact), and results are reported as pass counts with their spread. A handful of cases is an engineering check, not evidence of improvement; no percentage is published from it.
 
 ## Later, unscheduled
 
@@ -68,9 +79,10 @@ These stay in the plan as direction, not as work. Each needs evidence from Phase
 
 - **B2, time and provenance.** Revision IDs, a stable fact key, validity intervals, `asOf` queries. Contract 1.1.0 already carries `source`, `retrievedAt` and `validUntil`; start from those rather than a parallel model.
 - **B3, retrieval driven by misses.** Retrieval hints and tokenizer fixes first; one field-aware index only if measured misses justify it.
-- **B4, interoperability.** Hermes, Mem0, OpenViking, Pi. Read-only Markdown export first wherever the host offers one.
+- **B4, interoperability.** Hermes, Mem0, OpenViking, Pi, and GBrain as a source or target of reviewed facts. Read-only first wherever the host offers a file export.
+- **npm package.** Needs a build step that emits JavaScript, because Node does not strip types under `node_modules`.
 - **Parked releases.** 0.4.0 scopes, 0.5.0 escalation, 0.6.0 audit, 1.0.0 freeze. Their plans remain valid as designs. Revisit after Phase 3, with the audit findings as input.
 
 ## Dependencies
 
-Phase 1 precedes any write path that a user is asked to trust. Phase 2 is read-only and may start once B0-T01 has captured the baseline. Phase 3 needs B0-T05 (safe writes). Phase 5 combines only tested capabilities. Detail the active and the next batch only. Preserve the starter in `example/` at every checkpoint.
+Phase 1 item 1 precedes everything else. Phase 2 needs Phase 1 items 1, 2 and 7, because the plugin starts the MCP server on the user's machine. Phase 3 needs all of Phase 1. Phase 4 combines only tested capabilities. Detail the active and the next batch only. Preserve the starter in `example/` at every checkpoint.

@@ -103,7 +103,7 @@ quoting.**
 |---|---|
 | Claude Code's `CLAUDE.md` hierarchy: enterprise → user → project → subdirectory, with `@import` and `/memory` | `ANALYSIS-…` §1 (Layer 4b) |
 | Claude Code's per-project auto-memory directory with a hand-maintained `MEMORY.md` index, loaded every session | `ANALYSIS-…` §1, §3.2 — this is the basis of the "a hand-maintained index will drift" argument. **Now documented**, see §7. |
-| Auto-memory topic files carry `name`, `description` and a nested `metadata.type` in their frontmatter | `docs/strategy/ROADMAP.md` Phase 2. The docs name only the `type` field; the full shape is seen in this repo's own runtime. |
+| Auto-memory topic files appear in two frontmatter shapes: flat `type:` and a nested `metadata:` block holding `type`, with extra fields such as `modified` | `docs/strategy/ROADMAP.md` Phase 2. The docs name only a `type` field; both shapes were counted on the owner's machine on 2026-10-05. |
 | Skills use `SKILL.md` frontmatter descriptions for progressive disclosure | `ANALYSIS-…` §1 |
 
 ## 6. Named but not evaluated
@@ -123,10 +123,18 @@ integration-tested yet.
 | Claim | Grade | Source | Used in |
 |---|---|---|---|
 | Auto memory lives in `~/.claude/projects/<project>/memory/`, one topic file per memory plus a `MEMORY.md` index | docs | [Claude Code memory](https://code.claude.com/docs/en/memory) | ROADMAP Phase 2 |
-| Only the first 200 lines or 25KB of `MEMORY.md` are loaded at session start; content past that is not loaded | docs | [Claude Code memory](https://code.claude.com/docs/en/memory) | ROADMAP Phase 2 (truncation check) |
+| Only the first 200 lines or 25KB of `MEMORY.md` are loaded at session start; over the limit, the write succeeds and Claude Code returns an error telling Claude to rewrite the index | docs | [Claude Code memory](https://code.claude.com/docs/en/memory) | ROADMAP Phase 2 (truncation check) |
 | The memory kind is recorded as a `type` frontmatter field: `user`, `feedback`, `project`, `reference` | docs | [Claude Code memory](https://code.claude.com/docs/en/memory) | ROADMAP Phase 2 |
-| GBrain stores pages as Markdown with YAML frontmatter; compiled truth above a `---` rule, append-only timeline below; MIT licence | docs | [GBRAIN_RECOMMENDED_SCHEMA.md](https://github.com/garrytan/gbrain/blob/master/docs/GBRAIN_RECOMMENDED_SCHEMA.md) · [GBRAIN_V0.md](https://github.com/garrytan/gbrain/blob/master/docs/GBRAIN_V0.md) | ROADMAP Phase 4 |
-| GBrain uses a database underneath; a git checkout of Markdown is not guaranteed to be the live store | docs | [GBRAIN_V0.md](https://github.com/garrytan/gbrain/blob/master/docs/GBRAIN_V0.md) | ROADMAP Phase 4 entry gate |
+| `autoMemoryDirectory` in settings moves the auto-memory directory; `CLAUDE_CODE_PROJECT_DIR_NAME` renames the project directory | docs | [Claude Code memory](https://code.claude.com/docs/en/memory) | ROADMAP Phase 2 |
+| `/doctor prompt-audit` audits CLAUDE.md, AGENTS.md and `.claude/` content, not the auto-memory directory | docs | [Claude Code memory](https://code.claude.com/docs/en/memory) | POSITIONING |
+| Plugins from git, GitHub and relative sources are cached under `~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/` (`${CLAUDE_PLUGIN_ROOT}`); dependencies land in a `node_modules` inside that directory only if the plugin ships a lockfile | docs | [Plugin loading](https://code.claude.com/docs/en/plugins/loading) | ROADMAP Phase 2. Our inference, not stated in the docs: a `node` command in the plugin's MCP config resolves from the user's PATH, so the user's Node version decides whether `.ts` runs |
+| GBrain stores pages as Markdown with YAML frontmatter; compiled truth above a `---` rule, append-only timeline below; MIT licence | docs | [GBRAIN_RECOMMENDED_SCHEMA.md](https://github.com/garrytan/gbrain/blob/master/docs/GBRAIN_RECOMMENDED_SCHEMA.md) · [GBRAIN_V0.md](https://github.com/garrytan/gbrain/blob/master/docs/GBRAIN_V0.md) | ROADMAP, POSITIONING |
+| GBrain's Markdown repository is canonical; the database (PGLite or Postgres) is the retrieval index | docs | [GBrain README](https://github.com/garrytan/gbrain) | ROADMAP (no audit adapter) |
+| GBrain calls its gap analysis "the differentiator" and reports contradictions and holes during synthesis | docs | [GBrain README](https://github.com/garrytan/gbrain) | `VERDICT.md`, POSITIONING |
+| The owner's GBrain instance exposes `find_orphans`, `schema_lint`, `find_contradictions`, `ontology_conflicts`, page versions and revert | observation | GBrain MCP `request_tools` catalogue, v0.51, 2026-10-05 | POSITIONING, plan review |
+| `cc-memory-view` (MIT) audits Claude Code auto memory read-only: missing index, missing files, unlisted files, broken links, stale entries | community | [yokonao/cc-memory-view](https://github.com/yokonao/cc-memory-view) | POSITIONING |
+| `memory-hygiene` audits and cleans Claude Code memory, including `MEMORY.md` | community | [wan-huiyan/memory-hygiene](https://github.com/wan-huiyan/memory-hygiene) | POSITIONING |
+| Run-to-run noise in agent-memory evaluations is large (a figure near 30% is reported) | community, not verified by the author | [Taskade write-up](https://www.taskade.com/blog/agent-memory-negative-results) | ROADMAP Phase 3 (repeated runs) |
 | Node refuses to strip types from TypeScript files under a `node_modules` path | docs | [Node.js TypeScript](https://nodejs.org/api/typescript.html) | ROADMAP Phase 1 (B0-T07) |
 | Type stripping is on by default from v22.18.0 and v23.6.0 | docs | [Node.js TypeScript](https://nodejs.org/api/typescript.html), history table | ROADMAP Phase 1 (`engines` floor) |
 | OpenViking is a context database exposing `viking://` URIs, L0/L1/L2 tiers, an HTTP API on port 1933 and SDKs; core licensed AGPLv3 | docs | [OpenViking repository](https://github.com/volcengine/OpenViking) · [Sessions API](https://docs.openviking.ai/en/api/05-sessions) | ROADMAP, deferred |
