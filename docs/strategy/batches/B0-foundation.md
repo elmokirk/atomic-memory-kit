@@ -1,5 +1,7 @@
 # B0: reliable foundation
 
+**Superseded 2026-10-05** by [PoC](POC.md) increments I1-I4. Kept as a record; do not assign.
+
 Outcome: preserve the starter while making installation, representation, measurements, and controlled local writes dependable enough for a real companion.
 
 Entry gate: the owner assigns implementation of B0; inspect the current checkout and [red-team register](../reviews/RED-TEAM.md). Documentation approval is not that assignment. Full-suite and live-host results from the earlier review are unavailable.

@@ -1,60 +1,47 @@
-# Roadmap and priority decisions
+# Roadmap
 
-Planning revision: 2026-10-05, third pass. Scope, use cases and market position are set by [`PRODUCT.md`](../../PRODUCT.md); this file only orders the work. The second pass (a Claude Code companion with a correction-and-replay loop) is withdrawn: it would have competed with existing memory tools, which [`PRODUCT.md`](../../PRODUCT.md) §5 rules out. Its review findings on code and facts still stand ([plan review](reviews/PLAN-REVIEW-2026-10-05.md)). Ticket state lives only in batch documents.
+Planning revision: 2026-10-05, fourth pass. Scope, use cases and market position are set by [`PRODUCT.md`](../../PRODUCT.md); this file orders the work into a proof of concept and an MVP, each cut into increments that coding agents can execute in parallel. Ticket state and per-increment Definition of Done live in the batch files: [PoC](batches/POC.md) and [MVP](batches/MVP.md). Earlier passes are superseded; their findings remain in the [plan review](reviews/PLAN-REVIEW-2026-10-05.md) and the [red-team register](reviews/RED-TEAM.md).
 
-## Goals
+## Stages
 
-| # | Goal | Done when |
-|---|---|---|
-| G1 | **Safe to deploy next to a web server** | HTTP binds to loopback by default; writes over HTTP need a token; path escapes refused; each with a test |
-| G2 | **Correct for chatbots** | Streaming gap markers survive any chunk split; context budget is hard or reports overflow; eval metrics are honest |
-| G3 | **Fast first value** | A developer goes from a fresh clone to a chatbot retrieval with a recorded gap in under 15 minutes ([`PRODUCT.md`](../../PRODUCT.md) §6) |
-| G4 | **Useful to existing memory systems** | The Mem0 adapter records missed retrievals and runs eval cases against a real Mem0 instance |
-| G5 | **Credible open source** | Red-team findings closed or documented; every guide runnable as written |
+| Stage | Outcome | Increments | Estimate (agents in parallel, plus owner review) |
+|---|---|---|---|
+| **PoC** | A safe, correct core and a runnable chatbot demo that shows `no_match` and a recorded gap | I1-I5 | 2-3 days |
+| **MVP** | The same core reaches users through a Mem0 adapter and a Claude Code plugin, and is released | I6-I8 | 3-5 more days |
+| Later | Honcho or other adapters, retrieval improvements, enterprise | – | only on named demand |
 
-Non-goals: Claude Code companion or audit plugin, correction-and-replay product, own memory store for conversational memory, embeddings, hosted service, npm package, enterprise features without a paying customer, the parked 0.4.0 to 1.0.0 releases.
+Agents write the code fast; the limiting factor is the owner's review and the real-system checks (a running Mem0, a clean Claude Code profile). Estimates assume one review pass per increment.
 
-## Phases
+## Increments
 
-Effort is an estimate for one owner working with coding agents, including the docs required by `CLAUDE.md`. It is not a commitment. Each phase can shrink or stop the roadmap if its gate fails.
+| ID | Stage | Area | Content | Depends on | Owns (files) |
+|---|---|---|---|---|---|
+| I1 | PoC | Security | HTTP loopback and write token (R16); path confinement in both adapters and the memory tool (R13, R14, S06); corrupt ledger lines reported (R15) | – | `agent/mcp-server.mjs`, `adapters/fs.ts`, `adapters/memory-tool.ts`, `src/memory-tool.ts` |
+| I2 | PoC | Chatbot correctness | Lossless streaming gap decoder (R01-R03); hard context budget or overflow signal (R07); history zero (R09); no shared mutable config defaults (R19) | – | `src/gaps.ts`, `src/search.ts`, `src/config.ts`, `src/types.ts` |
+| I3 | PoC | Evaluation | Metrics in range (R10); forbidden retrievals fail on their own (R11); defined zero-case semantics | – | `src/eval.ts` |
+| I4 | PoC | Starter and CLI | `drift` exit code (S07); quickstart leaves the repo clean (verify S07, reclassify if it does not reproduce); root `npm run check` from a fresh clone; Node floor 22.18.0 with startup check | – | `cli/`, `package.json`, `example/memory.config.json` |
+| I5 | PoC | Chatbot demo | Runnable chatbot example: retrieval before the model, streamed answer, gap stripped and recorded, works without an API key; README rebuilt around it | I2, I4 | `example/chatbot/`, `README.md` |
+| I6 | MVP | Mem0 integration | Backend adapter interface; Mem0 adapter recording missed retrievals and running eval cases; write validation opt-in | PoC | `src/backend.ts`, `adapters/mem0.ts`, `docs/MEM0.md` |
+| I7 | MVP | Claude Code integration | Plugin and marketplace around the existing MCP server, read-only by default | I1 | `.claude-plugin/`, `plugin/` |
+| I8 | MVP | Release | Changelog, version, claims checked, guides executed, tag; LinkedIn material stays outside this repository | I6, I7 | `CHANGELOG.md`, release notes |
 
-| Phase | Content | Estimate | Gate | Batch |
-|---|---|---|---|---|
-| 0. Housekeeping | Commits pushed, strategy merged, plan reviewed, [`PRODUCT.md`](../../PRODUCT.md) written | done 2026-10-05 | One product definition on `master` | – |
-| 1. Chatbot-ready core | Security, then the defects that hit chatbots, then starter hygiene (list below) | 5-7 days | Every listed finding has a real-module test and a fix, or a documented limit | [B0](batches/B0-foundation.md) |
-| 2. Chatbot integration path | One runnable chatbot example (library call before the model, streamed answer, gap recorded); README rebuilt around it | 3-4 days | G3 timed by someone who did not write it | not ticketed |
-| 3. Backend adapter interface and Mem0 | One interface; Mem0 adapter for missed-retrieval recording and eval; write validation opt-in | 4-6 days | G4 on a pinned Mem0 open-source version | not ticketed |
-| 4. Public release | Claims checked against [`LINKMAP.md`](../../LINKMAP.md), guides executed, changelog, tag | 2-3 days | G5 | B5 |
-| Later | Honcho or Claude Code memory adapter; retrieval improvements; enterprise | demand-led | A named user or customer who needs it | – |
+Each increment owns its files. A change outside them goes through the integrator, who also owns the shared docs (`LIMITATIONS.md`, `SOURCEMAP.md`, `LINKMAP.md`) and merges in dependency order.
 
-Phases 1 to 4 are roughly three to four weeks of work.
+## Integration areas
 
-### Phase 1: scope, in order
+| Area | Surface | Built by | Done when (summary; full DoD in the batch files) |
+|---|---|---|---|
+| Library in a chatbot | `searchMemory`, gap detector, ledger | I2, I5 | The demo runs from a fresh clone in under 15 minutes and records a gap |
+| MCP | stdio and HTTP server | I1 | Loopback by default, writes need a token over HTTP, tool list matches `docs/MCP.md` |
+| Claude Code | Plugin from this repository's marketplace | I7 | Installs in two commands, tools callable, read-only by default, removable without residue |
+| Mem0 | Backend adapter | I6 | Missed retrievals and eval run against a pinned, running Mem0 open-source instance |
 
-1. **HTTP exposure (R16).** Loopback by default, log the address actually bound, explicit host option, no mutating tools over HTTP without a token.
-2. **Path confinement (R13, R14, S06)** in `adapters/fs.ts` and `src/memory-tool.ts`.
-3. **Streaming gap decoder (R01-R03).** Stateful, lossless, every marker detected at any split.
-4. **Context budget (R07)** hard, or an explicit overflow signal.
-5. **History zero (R09)** and shared mutable config defaults (R19).
-6. **Evaluator honesty (R10, R11).**
-7. **Corrupt ledger lines (R15)** reported, not skipped.
-8. **Starter hygiene (S07):** `eval` stops modifying tracked files, `drift` exits non-zero on an error finding, root `npm run check` works from a fresh clone.
-9. **Node floor 22.18.0** in `package.json`, README and LIMITATIONS, with a startup check.
+## Execution model
 
-Out: npm packaging, tarball tests, typechecking, multi-file write atomicity (documented as a limit), stale-proposal checks, S01-S05 where they do not touch an enabled path.
+- One agent per increment, each in its own git worktree and branch (`poc/i1-security`, ...). I1 to I4 run in parallel; I5 starts after I2 and I4 merge; I6 and I7 run in parallel after the PoC.
+- Every agent follows [`AGENTS.md`](../../AGENTS.md), [`CLAUDE.md`](../../CLAUDE.md) and the increment's DoD. A defect fix starts with a failing test against the real module.
+- The integrator (the owner's main session) reviews, merges, runs the full suite on the combined branch, updates shared docs and the batch tables. Agents do not merge, push tags or publish.
 
-### Phase 3: what the Mem0 adapter does
+## Out of scope
 
-The host passes its Mem0 search; AMK does not import a Mem0 SDK. On each search the adapter records a scope gap when no result clears the threshold, so recurring unanswered questions become visible. The eval runner executes must-retrieve and must-not-retrieve cases against Mem0 search by memory id. Write validation is opt-in: a candidate fact passes the AMK contract (durability, provenance) before the host calls Mem0's add. Entry check before building: confirm on the pinned version that Mem0 does not already offer missed-retrieval tracking.
-
-## Later, unscheduled
-
-- **Honcho adapter.** Only on demand: AGPL-3.0, and Honcho already ships its own Claude Code plugin.
-- **Claude Code memory adapter.** Only on demand; read-only audits already exist elsewhere.
-- **Retrieval improvements (B3).** Only when a real chatbot's eval shows misses that keywords and synonyms cannot fix.
-- **Time and provenance (B2).** Start from contract 1.1.0 fields if a chatbot needs dated facts.
-- **Parked releases** in [`docs/plans/`](../plans/README.md): revisit when a deployment asks for scopes or escalation.
-
-## Dependencies
-
-Phase 1 item 1 precedes everything else. Phase 2 needs Phase 1 items 3, 4, 8 and 9. Phase 3 needs Phase 1 items 6 and 7. Phase 4 combines only tested capabilities. Preserve the starter in `example/` at every checkpoint.
+Claude Code companion or audit product, correction-and-replay product, own conversational memory store, embeddings, hosted service, npm package, enterprise features without a paying customer, the parked releases in [`docs/plans/`](../plans/README.md), Honcho, OpenViking and GBrain adapters.
