@@ -10,10 +10,12 @@ filtering already happened and is not re-litigated per release.
 | Release | Theme | Contract | Status |
 |---|---|---|---|
 | [0.3.0](0.3.0-durability-and-provenance.md) | Durability & provenance | **1.1.0** | **shipped** |
-| [0.4.0](0.4.0-scopes.md) | Scopes | 1.1.0 | planned |
-| [0.5.0](0.5.0-escalation.md) | Two-stage retrieval | 1.1.0 | planned |
-| [0.6.0](0.6.0-audit.md) | The audit pass | 1.1.0 | planned |
-| [1.0.0](1.0.0-freeze.md) | Freeze & conformance | **1.1.0 frozen** | planned |
+| [0.4.0](0.4.0-scopes.md) | Scopes | 1.1.0 | parked |
+| [0.5.0](0.5.0-escalation.md) | Two-stage retrieval | 1.1.0 | parked |
+| [0.6.0](0.6.0-audit.md) | The audit pass | 1.1.0 | parked |
+| [1.0.0](1.0.0-freeze.md) | Freeze & conformance | **1.1.0 frozen** | parked |
+
+**Parked 2026-10-05.** Sequencing now follows [`docs/strategy/ROADMAP.md`](../strategy/ROADMAP.md): foundation fixes, a read-only audit of Claude Code memory, and a reviewed correction loop come first. The plans below stay valid as designs and are revisited after the correction loop ships, with real audit findings as input. Nothing in them is cancelled.
 
 ## Why this order
 

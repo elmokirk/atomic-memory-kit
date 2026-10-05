@@ -102,7 +102,8 @@ quoting.**
 | Claim | Where it appears |
 |---|---|
 | Claude Code's `CLAUDE.md` hierarchy: enterprise → user → project → subdirectory, with `@import` and `/memory` | `ANALYSIS-…` §1 (Layer 4b) |
-| Claude Code's per-project auto-memory directory with a hand-maintained `MEMORY.md` index, loaded every session | `ANALYSIS-…` §1, §3.2 — this is the basis of the "a hand-maintained index will drift" argument |
+| Claude Code's per-project auto-memory directory with a hand-maintained `MEMORY.md` index, loaded every session | `ANALYSIS-…` §1, §3.2 — this is the basis of the "a hand-maintained index will drift" argument. **Now documented**, see §7. |
+| Auto-memory topic files carry `name`, `description` and a nested `metadata.type` in their frontmatter | `docs/strategy/ROADMAP.md` Phase 2. The docs name only the `type` field; the full shape is seen in this repo's own runtime. |
 | Skills use `SKILL.md` frontmatter descriptions for progressive disclosure | `ANALYSIS-…` §1 |
 
 ## 6. Named but not evaluated
@@ -113,7 +114,25 @@ quoting.**
 
 ---
 
-## 7. Adding a row
+## 7. Memory systems targeted by adapters
+
+*Retrieved 2026-10-05.* Basis of the adapter phases in
+[`docs/strategy/ROADMAP.md`](docs/strategy/ROADMAP.md). Nothing here has been
+integration-tested yet.
+
+| Claim | Grade | Source | Used in |
+|---|---|---|---|
+| Auto memory lives in `~/.claude/projects/<project>/memory/`, one topic file per memory plus a `MEMORY.md` index | docs | [Claude Code memory](https://code.claude.com/docs/en/memory) | ROADMAP Phase 2 |
+| Only the first 200 lines or 25KB of `MEMORY.md` are loaded at session start; content past that is not loaded | docs | [Claude Code memory](https://code.claude.com/docs/en/memory) | ROADMAP Phase 2 (truncation check) |
+| The memory kind is recorded as a `type` frontmatter field: `user`, `feedback`, `project`, `reference` | docs | [Claude Code memory](https://code.claude.com/docs/en/memory) | ROADMAP Phase 2 |
+| GBrain stores pages as Markdown with YAML frontmatter; compiled truth above a `---` rule, append-only timeline below; MIT licence | docs | [GBRAIN_RECOMMENDED_SCHEMA.md](https://github.com/garrytan/gbrain/blob/master/docs/GBRAIN_RECOMMENDED_SCHEMA.md) · [GBRAIN_V0.md](https://github.com/garrytan/gbrain/blob/master/docs/GBRAIN_V0.md) | ROADMAP Phase 4 |
+| GBrain uses a database underneath; a git checkout of Markdown is not guaranteed to be the live store | docs | [GBRAIN_V0.md](https://github.com/garrytan/gbrain/blob/master/docs/GBRAIN_V0.md) | ROADMAP Phase 4 entry gate |
+| Node refuses to strip types from TypeScript files under a `node_modules` path | docs | [Node.js TypeScript](https://nodejs.org/api/typescript.html) | ROADMAP Phase 1 (B0-T07) |
+| Type stripping is on by default from v22.18.0 and v23.6.0 | docs | [Node.js TypeScript](https://nodejs.org/api/typescript.html), history table | ROADMAP Phase 1 (`engines` floor) |
+| OpenViking is a context database exposing `viking://` URIs, L0/L1/L2 tiers, an HTTP API on port 1933 and SDKs; core licensed AGPLv3 | docs | [OpenViking repository](https://github.com/volcengine/OpenViking) · [Sessions API](https://docs.openviking.ai/en/api/05-sessions) | ROADMAP, deferred |
+| OpenViking memories live under the user namespace (`viking://user/{id}/...`); older docs showed `viking://agent/memories`, the FAQ says that path is no longer writable | docs | [Context types](https://docs.openviking.ai/en/concepts/02-context-types) · [FAQ](https://docs.openviking.net/en/faq/faq) | ROADMAP, deferred (reason: API still moving) |
+
+## 8. Adding a row
 
 When you state a fact about someone else's system:
 

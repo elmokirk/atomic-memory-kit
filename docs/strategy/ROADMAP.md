@@ -1,64 +1,76 @@
 # Roadmap and priority decisions
 
-This roadmap replaces the earlier feature-first P00-P11 sequence. Priorities are product decisions, not measured performance scores. Ticket state lives only in batch documents.
+Planning revision: 2026-10-05. This revision replaces the 2026-09-26 batch order with a phase order, and parks the local release train in [`docs/plans/`](../plans/README.md) (0.4.0 to 1.0.0). Priorities are product decisions, not measured scores. Ticket state lives only in batch documents.
 
-## Priority order
+## Target picture
 
-| Priority | Capability | Why now or later | Core or extension |
-|---|---|---|---|
-| P0 | Reproducible safety, round-trip, evaluation, and installed-package behavior | New features cannot rely on incorrect foundations | Core and adapters |
-| P0 | A complete correction-and-replay workflow in a real agent | Tests product value before search complexity | Companion |
-| P0 for writes | Minimal provenance, scope, stale-write handling | Required before promoting knowledge as reviewed | Application boundary |
-| P1 | Temporal revision resolution | Addresses changing facts without overwriting history | Optional core capability |
-| P1 | Retrieval hints and measured lexical improvements | Add only what real missed questions justify | Optional retrieval module |
-| P1 | Hermes portability and Mem0 guidance | Tests that AMK complements rather than replaces memory | Integrations |
-| Later | Full benchmark orchestration, physical shards, embedding fallback | Add when small fixtures or profiling show a need | Optional tooling/adapters |
-| Demand-led | Enterprise stores, roles, audit, governance | Requires a concrete customer workflow and budget | Host/platform extensions |
+> AMK checks and hardens what agents believe they know, whether that knowledge lives in AMK itself, in Claude Code auto memory, or in a Markdown brain such as GBrain. It reports what is missing or wrong, and proves that a correction works on a later question.
 
-## Batches
+AMK runs **standalone first**: its own atoms, CLI and MCP server, no other memory system required. Adapters read other stores so the same checks apply to them. Adapters are a distribution channel; the checks are the product. See [Positioning](POSITIONING.md).
 
-| Batch | Working outcome | Entry | Exit |
-|---|---|---|---|
-| [B0](batches/B0-foundation.md) | Existing starter works on a hardened, installable baseline | Implementation assignment | Critical regressions tested, controlled writes, package smoke test, starter user test |
-| [B1](batches/B1-agent-companion.md) | Claude Code can complete and replay a knowledge correction; Pi reference works | B0 gate | Real-session evidence, explicit write permission, native memory preserved |
-| B2 | Current and historical facts have explicit identity and provenance | B1 feedback and temporal ADR | Revision/interval/conflict/round-trip tests; human historical-query test |
-| B3 | Better retrieval on held-out questions within a measured budget | Correct evaluator and observed misses | Comparison to the existing retriever; no new hard-negative violations |
-| B4 | Hermes companion and Mem0 promotion guide | Stable host-neutral contract | Same correction fixtures in Hermes; existing provider preserved |
-| B5 | Public, supportable release with reproducible evidence | B1-B4 gates or explicitly reduced release scope | External installs, documented limits, approved claim ledger |
-| B6 | Customer-funded enterprise increment | Validated enterprise demand | Agreed isolation, recovery, retention, and operational tests |
+## Goals
 
-## B2: time and provenance
+| # | Goal | Done when |
+|---|---|---|
+| G1 | **Audit.** AMK reads a native memory store read-only and reports concrete defects | `amk audit` on a real Claude Code memory directory produces reproducible findings |
+| G2 | **Reviewed promotion.** A correction becomes a validated, sourced atom | Three correction cases pass replay on the original and a held-out question |
+| G3 | **Install in under five minutes**, removable without residue | Two outside developers manage it without help |
+| G4 | **Credible open source.** Limits documented, no unbacked claims | Red-team findings closed or documented; claims ledger published |
+| G5 | **Enterprise only on demand** | A paid pilot exists before the first enterprise feature |
 
-Draft unique revision IDs, a stable fact key, source references, and validity intervals. Keep `recordedAt` separate from valid time. Derive current status; reject or surface ambiguous overlapping revisions. Support explicit `asOf` queries before automatic date interpretation. Unversioned legacy atoms remain usable and are visibly unversioned.
+Non-goals until a phase gate says otherwise: own vector store, embeddings, hosted service, two-way sync, writing into another system's store, replacing or intercepting native memory, Mem0/Hermes/Pi/OpenViking integrations, and the parked 0.4.0 to 1.0.0 features (scopes, escalation, audit pass, freeze).
 
-A product replacement's reason is a separate decision record, not an inference from `supersedes`. The source owner or connector must supply changes; AMK cannot discover all external changes from timestamps. No full bitemporal database in this batch.
+## Phases
 
-## B3: retrieval driven by misses
+Effort is an estimate for one owner working with coding agents, including the docs required by `CLAUDE.md`. It is not a commitment. Each phase can shrink or stop the roadmap if its gate fails.
 
-Try curated retrieval hints and tokenization fixes first. Use one field-aware inverted index if the measured problem requires it. BM25/BM25F is a candidate, not an obligation to replace a sufficient scorer. Do not add ranking fusion, n-grams, vector search, and routing together.
+| Phase | Content | Estimate | Gate | Batch |
+|---|---|---|---|---|
+| 0. Housekeeping | Local commits pushed, strategy merged, obsolete branches removed, this plan written | done 2026-10-05 | One plan on `master` | – |
+| 1. Foundation | Reduced B0: fix the red-team findings that sit on the released path | 4-6 days | Every finding reproduced by a real-module test and fixed, or documented as a limit | [B0](batches/B0-foundation.md) |
+| 2. Claude Code memory audit | Read-only adapter for the auto-memory directory plus `amk audit`; Claude Code plugin around the existing MCP server | 4-5 days | Demo: audit of the owner's own auto memory | [B1](batches/B1-agent-companion.md) T00, T02 |
+| 3. Correction loop | Promote a reviewed entry into a sourced atom, replay it in a new session; rejection writes nothing | 4-5 days | G2 and the owner's user test | [B1](batches/B1-agent-companion.md) T03, T05, T06 |
+| 4. GBrain, read-only | Same audit over a GBrain Markdown export | 2-4 days | Entry only if a Markdown export of the owner's brain exists on disk; otherwise skipped | not ticketed |
+| 5. Public release | README repositioning, quickstart, claims ledger, two outside installs | 3 days | G3 and G4 | B5 |
+| 6. Enterprise | Sell a pilot first (memory audit and hardening as a service), then build exactly what it requires | demand-led | Signed pilot | B6 |
 
-Evaluate held-out paraphrases, exact identifiers, confusable pricing terms, empty queries, out-of-scope questions, and oversized atoms. Compare latency, relevant recall, false positives, and the full returned context budget. A score is not confidence in truth.
+A credible open-source release is roughly five to seven weeks away. Enterprise work starts no earlier than two to three months after that, and only with a customer.
 
-## B4: interoperability
+### Why this order
 
-Hermes: start with the existing MCP surface and a versioned installation guide. Package a general plugin only when an observed workflow needs hooks. Keep the selected external memory provider enabled. Label MCP configuration as MCP configuration, not a tested native plugin.
+Phase 2 delivers visible value in week two with nothing external, because the Claude Code auto-memory format is documented and is already close to an atom: one Markdown file per memory, frontmatter, and an index. Phase 4 comes later because GBrain's live store is a database; a Markdown export is the only route that keeps AMK free of a client for someone else's API. OpenViking is deferred: it is not in use, its API is still moving, and its core licence (AGPLv3) needs a review before any enterprise offer touches it.
 
-Mem0: provide a guide and a minimal example of explicit candidate selection, source reference, human review, AMK proposal, and replay. Avoid automatic two-way synchronization and inferred-to-verified promotion. Pin the Mem0 edition and SDK before documenting exact calls. Native episodic memory stays authoritative for its own records.
+### Phase 1: what is in and out of B0
 
-## B5: product release and evidence
+In: B0-T01 to T06 and T08 as written, limited to the findings in the [red-team register](reviews/RED-TEAM.md).
 
-Ship a small fixture/result format that can grow into a benchmark kit. Keep conformance, retrieval, host use, and end-to-end answer quality separate. Compare native memory plus equivalent facts against AMK with comparable authoring effort. Validate a clean install with external developers before claiming easy onboarding.
+Changed: B0-T07. `npm` distribution is deferred. Node does not strip types from files under `node_modules`, so a registry package needs a build step this project avoids. Phase 2 ships as a Claude Code plugin, which installs outside `node_modules`. The `engines` floor moves from 22.6.0 to 22.18.0, the first 22.x release that strips types without a flag; T01 confirms it on a real install. Typechecking stays optional until a defect shows it is needed.
 
-Prepare a quickstart, correction-loop demo, integration pages, limitations, support boundaries, migration notes, and a claims ledger. Record exact sample sizes and versions. Marketing must not imply that schema validation proves truth or that a small fixture proves universal reliability.
+### Phase 2: what the audit checks
 
-## B6: enterprise and standardization
+The adapter reads the directory; it never writes to it. It does not go through the atom loader, because auto-memory frontmatter nests `metadata.type`, which the atom grammar rejects on purpose.
 
-Start from a paid workflow, not a dashboard wish list. Add only the required transactional store, authorization, audit, retention, deletion, and recovery controls. Local root confinement and safe writes are B0 requirements, not enterprise upsells.
+| Check | Why it matters |
+|---|---|
+| `MEMORY.md` exceeds 200 lines or 25KB | Content past the limit is not loaded at session start, and nothing tells the user |
+| Topic file not listed in `MEMORY.md` | The memory exists and no session will find it |
+| Index line points at a missing file | The agent is told about knowledge that is gone |
+| `[[link]]` with no matching memory | A dangling edge; AMK's loader refuses these for atoms |
+| Missing or unknown `type`, missing `description` | The index line cannot be judged for relevance |
+| Near-duplicate names or descriptions | Two memories that will drift apart |
+| `project` memory with an absolute date in the past | Candidate for review, reported as information, not as an error |
 
-A standard is a later adoption result: small published semantics, portable conformance cases, independent implementations, and external maintainers. An acquisition is not a deliverable or a release gate.
+Output reuses the gap ledger format where it fits, so audit findings and retrieval gaps live in one backlog.
 
-## Dependencies and parallelism
+## Later, unscheduled
 
-B0 precedes any accepted live write integration. B1 precedes broad optimization. B2 and B3 may overlap after identity/query contracts are agreed; B3 must test temporal filtering before combined acceptance. B4 adapter work may proceed against a stable API while B3 is measured. B5 combines only tested capabilities.
+These stay in the plan as direction, not as work. Each needs evidence from Phases 1 to 3 before it gets tickets.
 
-Detail the active and next batch only. A batch that fails to show value can shrink or stop the roadmap. Preserve the starter at every checkpoint.
+- **B2, time and provenance.** Revision IDs, a stable fact key, validity intervals, `asOf` queries. Contract 1.1.0 already carries `source`, `retrievedAt` and `validUntil`; start from those rather than a parallel model.
+- **B3, retrieval driven by misses.** Retrieval hints and tokenizer fixes first; one field-aware index only if measured misses justify it.
+- **B4, interoperability.** Hermes, Mem0, OpenViking, Pi. Read-only Markdown export first wherever the host offers one.
+- **Parked releases.** 0.4.0 scopes, 0.5.0 escalation, 0.6.0 audit, 1.0.0 freeze. Their plans remain valid as designs. Revisit after Phase 3, with the audit findings as input.
+
+## Dependencies
+
+Phase 1 precedes any write path that a user is asked to trust. Phase 2 is read-only and may start once B0-T01 has captured the baseline. Phase 3 needs B0-T05 (safe writes). Phase 5 combines only tested capabilities. Detail the active and the next batch only. Preserve the starter in `example/` at every checkpoint.

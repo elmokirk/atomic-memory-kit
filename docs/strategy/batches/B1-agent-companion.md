@@ -1,6 +1,6 @@
 # B1: a working agent companion
 
-Outcome: demonstrate a complete, reviewed knowledge correction in Claude Code, retain native memory, and exercise the same application boundary through a Pi reference.
+Outcome: audit Claude Code auto memory read-only, then demonstrate a complete, reviewed knowledge correction in Claude Code, retaining native memory. The Pi reference (T04) is optional since 2026-10-05; it runs only if the owner's Pi chatbot is in active use.
 
 Entry gate: B0 is accepted for the used read/write paths and the owner assigns B1. Read [Architecture](../ARCHITECTURE.md) and check host references in [Sources](../SOURCES.md). Actual installed Claude/Pi versions and the private chatbot integration point are not yet known.
 
@@ -10,12 +10,21 @@ Non-goals: replacing Claude Code auto-memory, intercepting undocumented host int
 
 | Ticket | Status | Owner | Depends on | Evidence |
 |---|---|---|---|---|
+| B1-T00 | planned | unassigned | B0-T01 | none |
 | B1-T01 | planned | unassigned | B1 assignment; read-only probing may be separately assigned earlier | none |
 | B1-T02 | planned | unassigned | T01, B0 acceptance | none |
 | B1-T03 | planned | unassigned | T01, B0 safe writes | none |
 | B1-T04 | planned | unassigned | T01, common operation contract | none |
 | B1-T05 | planned | unassigned | T02-T04 | none |
 | B1-T06 | planned | unassigned | T05 | none |
+
+## B1-T00: read-only audit of Claude Code auto memory
+
+Scope: a new adapter that reads an auto-memory directory, an `amk audit` command, tests with synthetic memory directories, and the docs listed in the [roadmap](../ROADMAP.md) Phase 2. No writes to the audited directory.
+
+Implement the checks listed in the roadmap. Parse the auto-memory frontmatter in the adapter rather than through the atom loader, which rejects the nested `metadata` map by design. Report findings in the gap ledger's shape where that fits. Never read outside the given directory.
+
+Acceptance: each check has a fixture that triggers it and one that does not; the audited directory is byte-identical before and after; a real run on the owner's memory directory produces findings the owner confirms as correct or incorrect; LIMITATIONS lists what the audit cannot see (meaning, truth, memories outside the directory).
 
 ## B1-T01: prove host surfaces
 

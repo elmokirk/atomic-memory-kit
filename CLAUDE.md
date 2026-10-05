@@ -52,7 +52,7 @@ Full module graph and layering rules: [`SOURCEMAP.md`](SOURCEMAP.md) §2.
 ## Commands
 
 ```bash
-npm test                  # 161 tests
+npm test                  # 203 tests
 npm run contract          # print the contract
 cd example && node ../cli/amk.mjs doctor
 ```

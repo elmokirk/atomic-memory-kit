@@ -4,6 +4,8 @@ Outcome: preserve the starter while making installation, representation, measure
 
 Entry gate: the owner assigns implementation of B0; inspect the current checkout and [red-team register](../reviews/RED-TEAM.md). Documentation approval is not that assignment. Full-suite and live-host results from the earlier review are unavailable.
 
+Scope note, 2026-10-05: B0-T07 is reduced by the [roadmap](../ROADMAP.md) Phase 1. Registry distribution is deferred, the first companion ships as a Claude Code plugin, and the `engines` floor moves to 22.18.0. Typechecking stays optional. T01 records the current `master` head as baseline, which includes contract 1.1.0.
+
 Non-goals: new ranking algorithms, temporal features, Hermes plugin, hosted service, full benchmark framework, and mass refactoring.
 
 ## Tickets and state
