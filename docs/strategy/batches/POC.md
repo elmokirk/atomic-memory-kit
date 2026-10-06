@@ -12,7 +12,7 @@ The integrator owns this table. Status values: `planned`, `in_progress`, `awaiti
 | I2 Chatbot correctness | done | `poc/i2-chatbot` | `2124737` R09, `8011a34` R19, `7792fee` R07, `8251de1` R01-R03 |
 | I3 Evaluation | done | `poc/i3-eval` | `ca6bec5` R10, `aa75cf6` R11, `d915782` zero cases |
 | I4 Starter and CLI | done | `poc/i4-cli` | `a737b1b` drift, `4455123` check, `bee26fe` Node floor, `5c29ab9` smoke; S07 eval part not reproduced |
-| I5 Chatbot demo | planned | `poc/i5-demo` | – |
+| I5 Chatbot demo | awaiting_user | `poc/i5-demo` | `fc6b363` demo + test, `22eae8a` README; author walk-through 8.8 s machine time; independent timed walk-through and owner run open |
 
 ## Definition of Done for every increment
 
