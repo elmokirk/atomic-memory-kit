@@ -78,7 +78,7 @@ is no build step. Zero dependencies, so there is nothing to `npm install`.
 
 ```bash
 npm link                 # optional: puts `amk` on your PATH
-npm test                 # 275 tests
+npm test                 # 298 tests
 ```
 
 There is no npm package yet: use a clone, or copy `src/` and `adapters/` into
@@ -127,7 +127,8 @@ writers.
 Deeper: [`CONCEPT.md`](CONCEPT.md) (the portable idea),
 [`CONTRACT.md`](CONTRACT.md) (atom rules, contract `1.1.0`),
 [`docs/MCP.md`](docs/MCP.md) (MCP server), [`docs/MEMORY-TOOL.md`](docs/MEMORY-TOOL.md)
-(Anthropic memory-tool backend), [`docs/INTEGRATIONS.md`](docs/INTEGRATIONS.md),
+(Anthropic memory-tool backend), [`docs/MEM0.md`](docs/MEM0.md) (gaps and eval over Mem0),
+[`docs/INTEGRATIONS.md`](docs/INTEGRATIONS.md),
 [`SOURCEMAP.md`](SOURCEMAP.md) (provenance and verification),
 [`LINKMAP.md`](LINKMAP.md) (sources for every external claim).
 
@@ -271,13 +272,14 @@ src/                pure engine — no I/O, no framework, no network
   restructure.ts      material -> validated atom proposals (the inbound direction)
   memory-tool.ts      Anthropic memory-tool commands, contract-gated
   expiry.ts           validUntil vs. an injected clock -> expiry gaps
-adapters/           fs.ts + memory-tool.ts — the only files that touch I/O
+  backend.ts          gaps, eval and validated writes over a host search
+adapters/           fs.ts + memory-tool.ts + mem0.ts — the only files that touch I/O
 cli/                thin shell over src/
 agent/              skills, MCP server (2026-07-28), AGENTS.md snippet
 docs/               deep dives + porting guide + MCP reference
 example/            working memory with planted gaps
   chatbot/demo.mjs    the one-minute demo: retrieval, scope gate, streamed gap
-tests/              275 tests, node:test, zero deps
+tests/              298 tests, node:test, zero deps
 ```
 
 ---

@@ -10,7 +10,7 @@
 | Understand search | [Retrieval](RETRIEVAL.md) |
 | Edit and return a bundle | [Bidirectional workflow](BIDIRECTIONAL.md) |
 | Understand missing-knowledge records | [Gap spotlighting](GAP-SPOTLIGHTING.md) |
-| Integrate a host | [LLM integration](INTEGRATION-LLM.md), [porting](PORTING.md), [filesystem adapter](../adapters/README.md) |
+| Integrate a host | [LLM integration](INTEGRATION-LLM.md), [porting](PORTING.md), [filesystem adapter](../adapters/README.md), [Mem0](MEM0.md) |
 | Connect an agent | [Agent integration](../agent/README.md), [MCP reference](MCP.md) |
 
 ## Develop the next increment

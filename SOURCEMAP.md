@@ -9,7 +9,7 @@ worse than none, because it is believed.
 
 - **Code total:** ~11 700 lines tracked, of which ~3 300 are `src/`
 - **Dependencies:** zero, runtime and dev
-- **Tests:** 275 (1 skipped on Windows without symlink rights), `node:test`
+- **Tests:** 298 (1 skipped on Windows without symlink rights), `node:test`
 
 ---
 
@@ -56,7 +56,7 @@ Two vocabulary changes were made during extraction, to remove chatbot framing:
 | `CONCEPT.md` | The idea lived in Kirk's head and in the shape of the code, nowhere in writing. |
 | `LIMITATIONS.md` | — |
 | `ANALYSIS-ANTHROPIC-MEMORY.md` | — |
-| `tests/` | The source had two lifecycle-gated test files; these 275 are new or rewritten. |
+| `tests/` | The source had two lifecycle-gated test files; these 298 are new or rewritten. |
 
 ### 1.3 Defects found *during* extraction
 
@@ -104,10 +104,12 @@ module may depend downward, never upward.
     restructure.ts .... compile, contract, loader, schema, types
     memory-tool.ts .... compile, gaps, parse-frontmatter, schema, types
     expiry.ts ......... gaps, types
+    backend.ts ........ eval, gaps, schema, types
 
   LAYER 4 — I/O and shells                    (the only files that touch the world)
     adapters/fs.ts .... node:fs, node:path, gaps, types
     adapters/memory-tool.ts  node:fs, node:path, fs.ts, gaps, loader, memory-tool
+    adapters/mem0.ts .. fetch, backend, types
     cli/amk.mjs ....... adapters/fs + src/*
     agent/mcp-server.mjs  adapters/fs + src/*
 ```
@@ -138,6 +140,7 @@ against a database or object store in an afternoon.
 | How do I put it in my own project? | `docs/PORTING.md` |
 | How do agents drive the loop? | `docs/MCP.md`, `agent/mcp-server.mjs` |
 | How do I back `/memories` with this? | `docs/MEMORY-TOOL.md` |
+| How do I add gap recording and eval to Mem0? | `docs/MEM0.md`, `src/backend.ts`, `adapters/mem0.ts` |
 | How do I connect Cowork, Claude Code, the API? | `docs/INTEGRATIONS.md` |
 | What might come next, and what should not? | `IDEAS.md` |
 | What is planned for the next releases? | `docs/plans/` |
@@ -173,13 +176,14 @@ Reproduce any of these from a clean checkout.
 
 | Claim made in the docs | How to check it |
 |---|---|
-| 275 tests, zero dependencies | `npm test` |
+| 298 tests, zero dependencies | `npm test` |
 | Contract, prose and validator agree | `node --test tests/contract.test.ts` |
 | Round-trip is lossless | `node --test tests/round-trip.test.ts` |
 | MRTR works across cold processes | `node --test tests/mcp.test.ts` |
 | Path traversal is rejected, writes are gated | `node --test tests/memory-tool.test.ts` |
 | Volatile is refused, expiry does not delete | `node --test tests/durability.test.ts` |
 | The chatbot demo runs with no API key, hides the marker, records a runtime and a scope gap, and leaves the tree clean | `npm run demo`; `node --test tests/demo.test.ts` |
+| Backend misses become scope gaps, a volatile write never reaches the host, the Mem0 request shapes match the recorded run | `node --test tests/backend.test.ts tests/mem0.test.ts` |
 | The example memory has findable gaps | `cd example && node ../cli/amk.mjs doctor` |
 | An expired atom is reported, not removed | `cd example && node ../cli/amk.mjs expiring` |
 | The HTTP transport speaks the revision | `npm run mcp:http`, then POST `server/discover` |

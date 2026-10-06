@@ -62,6 +62,13 @@ Subsections to use: `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `Secur
   character budget. The atom is still returned whole.
 - `resolveInside(root, path)` in `adapters/fs.ts`.
 - Eval summary field `matchCases`.
+- `src/backend.ts`: `MemoryBackend` (a host search returning `{id, text, score}`,
+  optional write), `searchBackend` (records a `scope` gap when nothing clears
+  your threshold), `runBackendEval` (eval cases by candidate id, same metrics
+  and `checkThresholds` as `runEval`) and `writeValidated` (contract and
+  durability check before the host write; a refusal calls nothing).
+- `adapters/mem0.ts` (`atomic-memory-kit/adapters/mem0`): Mem0 over HTTP with
+  `fetch`, no SDK; tested against `mem0ai` 2.2.1. Guide: `docs/MEM0.md`.
 
 ### Changed
 
