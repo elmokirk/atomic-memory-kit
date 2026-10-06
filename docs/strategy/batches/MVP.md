@@ -16,14 +16,14 @@ The Definition of Done for every increment in [POC.md](POC.md) applies here too.
 
 Entry check, recorded before building: on the pinned Mem0 open-source version, confirm the search and add endpoints, and confirm Mem0 does not already record searches that returned nothing. If it does, stop and report.
 
-- [ ] `src/backend.ts` defines one small, pure interface: a host-supplied search returning candidates with id, text and score, and an optional write. No I/O, no Mem0 types.
-- [ ] Wrapping a backend search records a scope gap when no candidate clears the threshold, reusing the existing ledger.
-- [ ] The eval runner executes must-retrieve and must-not-retrieve cases against a backend by candidate id.
-- [ ] Write validation is opt-in: a candidate fact passes the AMK contract (including durability) before the host's write is called; a rejection returns the diagnostic and calls nothing.
-- [ ] `adapters/mem0.ts` talks to Mem0 over HTTP with `fetch`; no Mem0 SDK dependency.
-- [ ] Tests run against a fake backend in-process; one recorded run against a real, pinned Mem0 instance (version, command, result) is in the evidence column.
-- [ ] `docs/MEM0.md` is runnable as written: start Mem0, point the adapter at it, see a gap and an eval result.
-- [ ] `LINKMAP.md` rows for every Mem0 fact the guide relies on.
+- [x] `src/backend.ts` defines one small, pure interface: a host-supplied search returning candidates with id, text and score, and an optional write. No I/O, no Mem0 types.
+- [x] Wrapping a backend search records a scope gap when no candidate clears the threshold, reusing the existing ledger.
+- [x] The eval runner executes must-retrieve and must-not-retrieve cases against a backend by candidate id.
+- [x] Write validation is opt-in: a candidate fact passes the AMK contract (including durability) before the host's write is called; a rejection returns the diagnostic and calls nothing.
+- [x] `adapters/mem0.ts` talks to Mem0 over HTTP with `fetch`; no Mem0 SDK dependency.
+- [x] Tests run against a fake backend in-process; one recorded run against a real, pinned Mem0 instance (version, command, result) is in the evidence column.
+- [x] `docs/MEM0.md` is runnable as written: start Mem0, point the adapter at it, see a gap and an eval result.
+- [x] `LINKMAP.md` rows for every Mem0 fact the guide relies on.
 
 ## I7 Claude Code integration
 
