@@ -6,47 +6,56 @@
  * out. Nothing here contains logic worth testing; the logic lives in src/ and
  * is tested there.
  *
- * Requires Node >= 22.6 (native TypeScript type stripping, no build step).
+ * Requires Node >= 22.18 (type stripping on by default, no build step).
  */
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
-import {
+// Checked before any .ts is imported, hence the dynamic imports below: a static
+// .ts import fails at link time on older Node with ERR_UNKNOWN_FILE_EXTENSION,
+// which names neither the cause nor the fix.
+const [nodeMajor, nodeMinor] = process.versions.node.split('.').map(Number)
+if (nodeMajor < 22 || (nodeMajor === 22 && nodeMinor < 18)) {
+  console.error(`amk requires Node >= 22.18.0, this is ${process.versions.node}. Upgrade Node and re-run.`)
+  process.exit(1)
+}
+
+const {
   readGapLedger,
   readMemoryDir,
   writeGapLedger,
   writeMemoryFiles,
   writeText,
-} from '../adapters/fs.ts'
-import {
+} = await import('../adapters/fs.ts')
+const {
   buildScopeIndex,
   compileMemory,
   decompile,
   parseBundle,
   renderBundle,
   renderDigest,
-} from '../src/compile.ts'
-import { describeContract } from '../src/contract.ts'
-import { checkDrift, driftToGaps, findUncoveredAtoms } from '../src/drift.ts'
-import { expiryToGaps, findExpiring, findUnboundedProvenance } from '../src/expiry.ts'
-import {
+} = await import('../src/compile.ts')
+const { describeContract } = await import('../src/contract.ts')
+const { checkDrift, driftToGaps, findUncoveredAtoms } = await import('../src/drift.ts')
+const { expiryToGaps, findExpiring, findUnboundedProvenance } = await import('../src/expiry.ts')
+const {
   checkThresholds,
   compareBaseline,
   defaultThresholds,
   evalToGaps,
   runEval,
-} from '../src/eval.ts'
-import {
+} = await import('../src/eval.ts')
+const {
   createGapLedger,
   findTodoMarkers,
   parseGapReport,
   renderGapReport,
-} from '../src/gaps.ts'
-import { findOrphanAtoms, loadMemory } from '../src/loader.ts'
-import { searchMemory } from '../src/search.ts'
-import { MemoryContractError } from '../src/types.ts'
+} = await import('../src/gaps.ts')
+const { findOrphanAtoms, loadMemory } = await import('../src/loader.ts')
+const { searchMemory } = await import('../src/search.ts')
+const { MemoryContractError } = await import('../src/types.ts')
 
-import {
+const {
   error,
   fail,
   heading,
@@ -57,8 +66,7 @@ import {
   readJsonFile,
   style,
   warn,
-} from './lib.mjs'
-import { readFileSync } from 'node:fs'
+} = await import('./lib.mjs')
 
 const USAGE = `
 ${style.bold('amk')} — atomic memory kit

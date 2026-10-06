@@ -53,3 +53,21 @@ describe('amk drift', () => {
     assert.equal(status, 0)
   })
 })
+
+describe('Node version floor', () => {
+  // Simulates an old Node: the version reads 22.17.0 and any .ts import throws,
+  // as it does without type stripping. The message must win that race.
+  const OLD_NODE = [
+    '--import',
+    'data:text/javascript,import { registerHooks } from "node:module";'
+      + 'Object.defineProperty(process.versions, "node", { value: "22.17.0" });'
+      + 'registerHooks({ resolve(s, c, next) { if (s.endsWith(".ts")) throw new Error("no type stripping"); return next(s, c) } })',
+  ]
+
+  it('refuses to start below 22.18.0 with one clear line, before any .ts import', () => {
+    const { status, out } = amk(['contract'], OLD_NODE)
+    assert.match(out, /requires Node >= 22\.18\.0, this is 22\.17\.0/)
+    assert.doesNotMatch(out, /no type stripping/)
+    assert.equal(status, 1)
+  })
+})
