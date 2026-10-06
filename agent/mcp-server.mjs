@@ -4,6 +4,7 @@
  *
  *   node agent/mcp-server.mjs --config ./memory.config.json          # stdio
  *   node agent/mcp-server.mjs --config ./memory.config.json --http 8787
+ *   node agent/mcp-server.mjs --config ./memory.config.json --http 8787 --host 0.0.0.0
  *
  * ## Why this file looks the way it does
  *
@@ -455,6 +456,7 @@ const TOOLS = [
       required: ['atoms'],
       additionalProperties: false,
     },
+    mutates: () => true,
     run: ({ atoms, dryRun = false }) => {
       const report = getReport()
       const plan = planApply(report.base, atoms, { contractVersion: CONTRACT_VERSION })
@@ -532,6 +534,7 @@ const TOOLS = [
       required: ['topic'],
       additionalProperties: false,
     },
+    mutates: () => true,
     run: ({ topic, kind = 'runtime', detail }) => {
       const ledger = getLedger()
       const record = ledger.observe({ kind, topic, detail, source: 'mcp' })
@@ -552,6 +555,7 @@ const TOOLS = [
       required: ['id'],
       additionalProperties: false,
     },
+    mutates: () => true,
     run: ({ id, resolvedBy }) => {
       const ledger = getLedger()
       if (!ledger.close(id, resolvedBy)) return toolResult({ error: `unknown gap id: ${id}` })
@@ -585,6 +589,8 @@ const TOOLS = [
       },
       additionalProperties: false,
     },
+    // Without autoApply this only asks and plans; the write goes through memory_apply.
+    mutates: (args) => args.autoApply === true,
     run: (args, ctx) => {
       const { limit = 3, category, lang = 'en', autoApply = false } = args
       const base = getBase()
@@ -775,7 +781,7 @@ function negotiate(meta) {
   return requested
 }
 
-function dispatch(method, params) {
+function dispatch(method, params, transport) {
   const meta = params?._meta
   negotiate(meta)
 
@@ -805,6 +811,15 @@ function dispatch(method, params) {
   if (method === 'tools/call') {
     const tool = BY_NAME.get(params?.name)
     if (!tool) throw new RpcError(ERROR.INVALID_PARAMS, `unknown tool: ${params?.name}`)
+    // Over HTTP anyone who can reach the socket is a caller, so a write needs a
+    // token. Stdio is spawned by the user's own client and is unchanged.
+    if (transport === 'http' && !AUTH_TOKEN && tool.mutates?.(params.arguments ?? {})) {
+      throw new RpcError(
+        ERROR.INVALID_PARAMS,
+        `${tool.name} writes to the memory and is refused over HTTP while AMK_AUTH_TOKEN is unset. `
+          + 'Set AMK_AUTH_TOKEN on the server and send it as a Bearer token, or use stdio.',
+      )
+    }
     return tool.run(params.arguments ?? {}, {
       inputResponses: params.inputResponses,
       requestState: params.requestState,
@@ -828,9 +843,9 @@ function dispatch(method, params) {
   throw new RpcError(ERROR.INVALID_PARAMS, `unsupported method: ${method}`)
 }
 
-function respond(request) {
+function respond(request, transport = 'stdio') {
   try {
-    return { jsonrpc: '2.0', id: request.id, result: dispatch(request.method, request.params) }
+    return { jsonrpc: '2.0', id: request.id, result: dispatch(request.method, request.params, transport) }
   } catch (error) {
     const rpc = error instanceof RpcError
     return {
@@ -884,7 +899,7 @@ function runStdio() {
  * ------------------------------------------------------------------ */
 
 /**
- * Optional bearer token for the HTTP transport.
+ * Bearer token for the HTTP transport. Without it, HTTP serves read tools only.
  *
  * Not optional in practice for hosted clients: Claude's custom connectors reach
  * the server from Anthropic's cloud, so the endpoint must be on the public
@@ -902,7 +917,7 @@ function authorized(req) {
   return a.length === b.length && timingSafeEqual(a, b)
 }
 
-function runHttp(port) {
+function runHttp(port, host) {
   const server = createServer((req, res) => {
     const json = (status, payload, headers = {}) => {
       const text = JSON.stringify(payload)
@@ -958,16 +973,21 @@ function runHttp(port) {
       }
 
       if (request.id === undefined) return json(202, {})
-      json(200, respond(request), { 'mcp-protocol-version': PROTOCOL_VERSION })
+      json(200, respond(request, 'http'), { 'mcp-protocol-version': PROTOCOL_VERSION })
     })
   })
 
-  server.listen(port, () => {
-    process.stderr.write(`atomic-memory-kit MCP (${PROTOCOL_VERSION}) on http://127.0.0.1:${port}\n`)
+  server.listen(port, host, () => {
+    // Print what the OS bound, not what was asked for: port 0 and hostnames
+    // resolve to something else, and a log that misstates exposure is worse
+    // than none.
+    const bound = server.address()
+    const shown = bound.family === 'IPv6' ? `[${bound.address}]` : bound.address
+    process.stderr.write(`atomic-memory-kit MCP (${PROTOCOL_VERSION}) on http://${shown}:${bound.port}\n`)
     if (!AUTH_TOKEN) {
       process.stderr.write(
-        'warning: AMK_AUTH_TOKEN is unset — every caller who can reach this port can write '
-        + 'to the memory. Set it before exposing this beyond localhost.\n',
+        'warning: AMK_AUTH_TOKEN is unset — write tools are refused over HTTP; read tools are open '
+        + 'to every caller who can reach this port.\n',
       )
     }
     if (STATE_SECRET_IS_EPHEMERAL) {
@@ -980,5 +1000,7 @@ function runHttp(port) {
 }
 
 const httpPort = flag('--http')
-if (httpPort) runHttp(Number(httpPort))
+// Loopback unless told otherwise: a wildcard bind next to a public web server
+// is exposure nobody asked for.
+if (httpPort) runHttp(Number(httpPort), flag('--host') ?? '127.0.0.1')
 else runStdio()

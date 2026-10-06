@@ -23,9 +23,8 @@
  * call site is one line.
  */
 import { rmSync } from 'node:fs'
-import { join } from 'node:path'
 
-import { readGapLedger, readMemoryDir, writeGapLedger, writeMemoryFiles } from './fs.ts'
+import { readGapLedger, readMemoryDir, resolveInside, writeGapLedger, writeMemoryFiles } from './fs.ts'
 import { createGapLedger } from '../src/gaps.ts'
 import type { GapRecord } from '../src/gaps.ts'
 import { loadMemory } from '../src/loader.ts'
@@ -101,10 +100,11 @@ export function createMemoryToolHandler(options: MemoryToolHandlerOptions): Memo
     // + delete-source, so this ordering means a crash between the two leaves a
     // duplicate — recoverable — rather than a hole. `writeMemoryFiles` skips
     // byte-identical files, so a no-op rewrite does not touch mtimes.
+    // Deletes are confined before anything is written, so a refused delete
+    // cannot strand a half-applied rename.
+    const deletes = outcome.deletes.map((relative) => resolveInside(options.root, relative))
     if (outcome.writes.length > 0) writeMemoryFiles(options.root, outcome.writes)
-    for (const relative of outcome.deletes) {
-      rmSync(join(options.root, relative), { force: true })
-    }
+    for (const target of deletes) rmSync(target, { force: true })
     snapshot = null
   }
 
@@ -120,7 +120,15 @@ export function createMemoryToolHandler(options: MemoryToolHandlerOptions): Memo
     handle(input) {
       const { files, base, loadError } = read()
       const outcome = runMemoryToolCommand(input, { files, base, loadError })
-      applyEffects(outcome)
+      try {
+        applyEffects(outcome)
+      } catch (error) {
+        // A symlink or junction out of the root is only visible on disk, so the
+        // pure layer cannot refuse it. Report it the way the model reads every
+        // other refusal; all paths are checked before any write, so this is true.
+        const message = error instanceof Error ? error.message : String(error)
+        return { content: `Error: ${message}. Nothing was written.`, is_error: true, gaps: [] }
+      }
       const gaps = recordGaps(outcome)
       return {
         content: outcome.content,
