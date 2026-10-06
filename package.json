@@ -40,7 +40,7 @@
     "gaps": "node cli/amk.mjs gaps",
     "drift": "node cli/amk.mjs drift",
     "test": "node --test \"tests/*.test.ts\"",
-    "check": "node cli/amk.mjs validate && node cli/amk.mjs eval && npm run test",
+    "check": "cd example && node ../cli/amk.mjs validate && node ../cli/amk.mjs eval && cd .. && npm test",
     "mcp": "node agent/mcp-server.mjs --config ./memory.config.json",
     "mcp:http": "node agent/mcp-server.mjs --config ./memory.config.json --http 8787",
     "contract": "node cli/amk.mjs contract",
