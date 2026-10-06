@@ -92,35 +92,90 @@ export function stripGapMarkers(text: string): string {
   return text.replace(GAP_MARKER_PATTERN, '').replace(/[ \t]{2,}/g, ' ').trimEnd()
 }
 
+export interface GapDetectorOutput {
+  /** Text safe to show now: the input minus markers, whitespace untouched. */
+  text: string
+  /** Topics of markers completed by this call. */
+  topics: string[]
+}
+
 export interface GapDetector {
-  /** Feed a streaming delta; returns topics discovered by this delta. */
+  /** Feed a streaming delta; returns visible text and topics it completed. */
+  write: (delta: string) => GapDetectorOutput
+  /**
+   * End of stream. A held-back marker that never closed is not a marker, so it
+   * is released verbatim, matching what `GAP_MARKER_PATTERN` does on the whole
+   * text. Leaves the detector clean for the next turn.
+   */
+  end: () => GapDetectorOutput
+  /** Topics only, for callers that do not display through the detector. */
   push: (delta: string) => string[]
-  /** Reset between turns. */
+  /** Reset between turns; drops held-back text. */
   reset: () => void
 }
 
+const MARKER_HEAD = '[GAP:'
+// Derived, not restated, so the streaming and batch paths cannot disagree.
+const MARKER_AT = new RegExp(GAP_MARKER_PATTERN.source, 'y')
+const TOPIC_MAX = 80
+
+/** Could `text[open..]` still become a marker once more input arrives? */
+function couldBecomeMarker(text: string, open: number): boolean {
+  if (text.length - open < MARKER_HEAD.length) return MARKER_HEAD.startsWith(text.slice(open))
+  if (!text.startsWith(MARKER_HEAD, open) || text.includes(']', open)) return false
+  // `\s*` absorbs any leading whitespace, so only what follows it is capped.
+  // ponytail: a head followed by endless whitespace is held until end().
+  return text.slice(open + MARKER_HEAD.length).trimStart().length <= TOPIC_MAX
+}
+
 /**
- * Streaming detector for token-by-token output.
+ * Streaming decoder for token-by-token output.
  *
- * A marker can be split across deltas ("… [GA" + "P: pricing]"), so a rolling
- * tail is kept rather than testing each delta in isolation. The tail must be
- * comfortably longer than the longest possible marker.
+ * Stateful and lossless: text is released as soon as it cannot be part of a
+ * marker, and only a possible marker prefix is held back, however long the
+ * stream and wherever the deltas are cut. A fixed rolling tail lost every
+ * marker after the first once it scrolled out, and stripping each delta on its
+ * own leaked split markers and ate whitespace at delta boundaries.
+ *
+ * `tailLength` is accepted for compatibility and ignored; nothing is windowed.
  */
-export function createGapDetector(tailLength = 128): GapDetector {
-  let tail = ''
-  let seen = 0
+export function createGapDetector(_tailLength?: number): GapDetector {
+  let held = ''
+
+  function decode(delta: string, final: boolean): GapDetectorOutput {
+    const input = held + delta
+    held = ''
+    let text = ''
+    const topics: string[] = []
+    let index = 0
+    while (index < input.length) {
+      const open = input.indexOf('[', index)
+      if (open === -1) break
+      text += input.slice(index, open)
+      MARKER_AT.lastIndex = open
+      const match = MARKER_AT.exec(input)
+      if (match) {
+        const topic = match[1]!.trim()
+        if (topic !== '') topics.push(topic)
+        index = open + match[0].length
+        continue
+      }
+      if (!final && couldBecomeMarker(input, open)) {
+        held = input.slice(open)
+        return { text, topics }
+      }
+      text += '['
+      index = open + 1
+    }
+    return { text: text + input.slice(index), topics }
+  }
+
   return {
-    push(delta: string): string[] {
-      tail = (tail + delta).slice(-tailLength)
-      const matches = [...tail.matchAll(GAP_MARKER_PATTERN)]
-      if (matches.length <= seen) return []
-      const fresh = matches.slice(seen).map((match) => match[1]!.trim()).filter(Boolean)
-      seen = matches.length
-      return fresh
-    },
+    write: (delta: string) => decode(delta, false),
+    end: () => decode('', true),
+    push: (delta: string) => decode(delta, false).topics,
     reset(): void {
-      tail = ''
-      seen = 0
+      held = ''
     },
   }
 }
