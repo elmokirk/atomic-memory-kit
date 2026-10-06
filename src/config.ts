@@ -51,13 +51,20 @@ export const defaultMemoryConfig: MemoryConfig = {
   language: defaultLanguageConfig,
 }
 
-/** Shallow-merge with a nested merge for `weights` and `language`. */
+/**
+ * Shallow-merge with a nested merge for `weights` and `language`.
+ *
+ * Defaults are cloned per call: a spread copies only the top level, so every
+ * returned config used to share the default arrays and maps, and one caller's
+ * `categories.push()` became every later caller's default.
+ */
 export function defineMemoryConfig(partial: Partial<MemoryConfig> = {}): MemoryConfig {
+  const defaults = structuredClone(defaultMemoryConfig)
   return {
-    ...defaultMemoryConfig,
+    ...defaults,
     ...partial,
-    weights: { ...defaultMemoryConfig.weights, ...(partial.weights ?? {}) },
-    language: { ...defaultLanguageConfig, ...(partial.language ?? {}) },
+    weights: { ...defaults.weights, ...(partial.weights ?? {}) },
+    language: { ...defaults.language, ...(partial.language ?? {}) },
   }
 }
 
@@ -65,9 +72,9 @@ export function defineMemoryConfig(partial: Partial<MemoryConfig> = {}): MemoryC
 export function resolveLanguageProfile(config?: LanguageConfig): LanguageProfile {
   const merged = { ...defaultLanguageConfig, ...(config ?? {}) }
   return {
-    fold: merged.fold ?? {},
+    fold: { ...(merged.fold ?? {}) },
     stopwords: new Set(merged.stopwords ?? []),
-    stemSuffixes: merged.stemSuffixes ?? [],
+    stemSuffixes: [...(merged.stemSuffixes ?? [])],
     minStemLength: merged.minStemLength ?? 4,
     minPrefixLength: merged.minPrefixLength ?? 5,
     dropYearTokens: merged.dropYearTokens !== false,

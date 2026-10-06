@@ -8,7 +8,7 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 
-import { defineMemoryConfig } from '../src/config.ts'
+import { defineMemoryConfig, resolveLanguageProfile } from '../src/config.ts'
 import { loadMemory } from '../src/loader.ts'
 import { normalize, stem, tokenize } from '../src/score.ts'
 import { buildQuery, searchMemory } from '../src/search.ts'
@@ -220,6 +220,33 @@ describe('budget discipline', () => {
     const capped = defineMemoryConfig({ ...config, maxChunks: 1, edgeMaxChunks: 0 })
     const { base: cappedBase } = loadMemory(FILES, capped)
     assert.equal(searchMemory(cappedBase, 'price limits').chunks.length, 1)
+  })
+})
+
+describe('config defaults', () => {
+  it('mutating a returned config does not leak into the next one', () => {
+    const first = defineMemoryConfig()
+    first.categories.push('leaked')
+    first.intents.push('leaked')
+    first.contextCategories!['/leaked'] = ['leaked']
+    first.weights.keywords = 99
+    first.language!.stopwords!.push('leaked')
+    first.language!.fold!['x'] = 'leaked'
+    first.language!.stemSuffixes!.push('leaked')
+
+    const second = defineMemoryConfig()
+    assert.deepEqual(second.categories, [])
+    assert.deepEqual(second.intents, [])
+    assert.deepEqual(second.contextCategories, {})
+    assert.equal(second.weights.keywords, 3)
+    assert.ok(!second.language!.stopwords!.includes('leaked'))
+    assert.equal(second.language!.fold!['x'], undefined)
+    assert.ok(!second.language!.stemSuffixes!.includes('leaked'))
+  })
+
+  it('mutating a resolved language profile does not leak into the next one', () => {
+    resolveLanguageProfile().fold['x'] = 'leaked'
+    assert.equal(resolveLanguageProfile().fold['x'], undefined)
   })
 })
 
