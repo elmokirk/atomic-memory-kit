@@ -66,10 +66,13 @@ export function runEval(base: MemoryBase, cases: EvalCase[]): EvalSummary {
   let retrievedTotal = 0
 
   const alwaysIds = base.alwaysInclude.map((atom) => atom.id)
+  const categoryOf = new Map(base.atoms.map((atom) => [atom.id, atom.category]))
 
   for (const testCase of cases) {
     const result = searchMemory(base, testCase.q, { context: testCase.context })
-    const ids = result.chunks.map((chunk) => chunk.id)
+    // Deduplicated on both sides: a repeated id is one atom, and counting it
+    // twice is how a share drifts outside [0, 1].
+    const ids = [...new Set(result.chunks.map((chunk) => chunk.id))]
     // always-include atoms are injected by the consumer, not returned as
     // chunks — correctness checks consider both surfaces.
     const available = new Set([...ids, ...alwaysIds])
@@ -79,10 +82,14 @@ export function runEval(base: MemoryBase, cases: EvalCase[]): EvalSummary {
 
     if (result.scopeStatus !== 'match') continue
 
-    const expectIds = testCase.expectIds ?? []
+    const expectIds = [...new Set(testCase.expectIds ?? [])]
     const missingIds = expectIds.filter((id) => !available.has(id))
-    if (missingIds.length === 0 && ids.length > 0) hits++
-    else if (missingIds.length > 0) failures.push({ q: testCase.q, reason: `missing expected ids: ${missingIds.join(', ')}` })
+    // hitRate is a share of the cases *expected* to match. A negative case that
+    // matched by accident is a scope failure, not a hit — counting it here is
+    // what once pushed the rate above 1.
+    if (missingIds.length === 0 && ids.length > 0) {
+      if (testCase.expectScope === 'match') hits++
+    } else if (missingIds.length > 0) failures.push({ q: testCase.q, reason: `missing expected ids: ${missingIds.join(', ')}` })
 
     for (const id of testCase.mustNotRetrieve ?? []) {
       if (ids.includes(id)) confusionPairs.add(`${testCase.q} → ${id}`)
@@ -90,9 +97,8 @@ export function runEval(base: MemoryBase, cases: EvalCase[]): EvalSummary {
 
     const categories = new Set(testCase.expectCategories ?? [])
     retrievedTotal += ids.length
-    retrievedRelevant += base.atoms
-      .filter((atom) => ids.includes(atom.id))
-      .filter((atom) => expectIds.includes(atom.id) || categories.has(atom.category)).length
+    retrievedRelevant += ids
+      .filter((id) => expectIds.includes(id) || categories.has(categoryOf.get(id) ?? '')).length
   }
 
   const matchTotal = Math.max(1, cases.filter((entry) => entry.expectScope === 'match').length)
