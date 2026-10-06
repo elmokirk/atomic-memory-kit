@@ -5,6 +5,7 @@
  *   node agent/mcp-server.mjs --config ./memory.config.json          # stdio
  *   node agent/mcp-server.mjs --config ./memory.config.json --http 8787
  *   node agent/mcp-server.mjs --config ./memory.config.json --http 8787 --host 0.0.0.0
+ *   node agent/mcp-server.mjs --config ./memory.config.json --allow-writes false   # read-only
  *
  * ## Why this file looks the way it does
  *
@@ -122,8 +123,19 @@ try {
 } catch (error) {
   // Surface on the first tool call rather than dying before the client can
   // render anything useful.
-  configError = error instanceof Error ? error.message : String(error)
+  configError = error?.code === 'ENOENT'
+    ? `no memory config at ${configPath}. Create memory.config.json there (see docs/INTEGRATIONS.md §1), `
+      + 'or pass --config, or set the Claude Code plugin option "config".'
+    : `config ${configPath}: ${error instanceof Error ? error.message : String(error)}`
 }
+
+/**
+ * Absent flag: writes allowed, the pre-plugin stdio behaviour. Present: writes
+ * only for the exact value `true`, so a plugin option that was never
+ * substituted fails closed instead of open.
+ */
+const allowWritesFlag = flag('--allow-writes')
+const READ_ONLY = allowWritesFlag !== undefined && allowWritesFlag !== 'true'
 
 const abs = (value, fallback) => {
   const target = value ?? fallback
@@ -154,7 +166,7 @@ const STATE_SECRET_IS_EPHEMERAL = process.env.AMK_STATE_SECRET === undefined
 
 let cache = null
 function getBase({ fresh = false } = {}) {
-  if (configError) throw new Error(`config ${configPath}: ${configError}`)
+  if (configError) throw new Error(configError)
   if (fresh || cache === null || fileConfig.watch === true) {
     cache = loadMemory(readMemoryDir(paths.root), memoryConfig)
   }
@@ -826,6 +838,13 @@ function dispatch(method, params, transport) {
         ERROR.INVALID_PARAMS,
         `${tool.name} writes to the memory and is refused over HTTP while AMK_AUTH_TOKEN is unset. `
           + 'Set AMK_AUTH_TOKEN on the server and send it as a Bearer token, or use stdio.',
+      )
+    }
+    if (READ_ONLY && tool.mutates?.(params.arguments ?? {})) {
+      throw new RpcError(
+        ERROR.INVALID_PARAMS,
+        `${tool.name} writes to the memory and this server is read-only. Enable the Claude Code plugin `
+          + 'option allow_writes, or start the server with --allow-writes true.',
       )
     }
     return tool.run(params.arguments ?? {}, {
