@@ -77,6 +77,29 @@ describe('metric ranges', () => {
   })
 })
 
+describe('empty denominators and empty expectations', () => {
+  const lenient = { scopeAccuracy: 0, hitRate: 0, precision: 0 }
+
+  it('zero cases measure nothing: metrics are vacuously 1 and the run still fails', () => {
+    const summary = runEval(base, [])
+    assert.deepEqual([summary.total, summary.scopeAccuracy, summary.hitRate, summary.precision], [0, 1, 1, 1])
+    assert.deepEqual(checkThresholds(summary, lenient), ['no eval cases: nothing was measured'])
+  })
+
+  it('a suite of only negative cases cannot pass on an unmeasured hit rate', () => {
+    const summary = runEval(base, [{ q: 'give me a recipe for strawberry jam', expectScope: 'no_match' }])
+    assert.deepEqual([summary.scopeAccuracy, summary.hitRate, summary.precision], [1, 1, 1])
+    assert.deepEqual(checkThresholds(summary, lenient), ['no match cases: hitRate not measured'])
+  })
+
+  it('a match case with no expectations hits on any retrieval but declares nothing relevant', () => {
+    const summary = runEval(base, [{ q: 'what does it cost', expectScope: 'match' }])
+    assert.equal(summary.hitRate, 1)
+    assert.equal(summary.precision, 0)
+    assert.deepEqual(summary.failures, [])
+  })
+})
+
 // Every aggregate is perfect, yet the edge drags in an atom the case forbids.
 const FORBIDDEN: EvalCase[] = [{
   q: 'what does it cost',

@@ -45,6 +45,8 @@ export const defaultThresholds: EvalThresholds = {
 
 export interface EvalSummary {
   total: number
+  /** Cases with expectScope 'match': the hitRate denominator. */
+  matchCases: number
   /** Share of cases where the scope gate (match/no_match) was right. */
   scopeAccuracy: number
   /** Share of match-cases where all expected ids were available. */
@@ -101,12 +103,17 @@ export function runEval(base: MemoryBase, cases: EvalCase[]): EvalSummary {
       .filter((id) => expectIds.includes(id) || categories.has(categoryOf.get(id) ?? '')).length
   }
 
-  const matchTotal = Math.max(1, cases.filter((entry) => entry.expectScope === 'match').length)
+  const matchCases = cases.filter((entry) => entry.expectScope === 'match').length
+  // An empty denominator measured nothing, so its share is vacuously 1, the
+  // rule precision always used. That keeps every metric in [0, 1];
+  // checkThresholds is what refuses to let "vacuously perfect" pass.
+  const share = (part: number, whole: number): number => round(whole === 0 ? 1 : part / whole)
   return {
     total: cases.length,
-    scopeAccuracy: round(cases.length === 0 ? 1 : correctScope / cases.length),
-    hitRate: round(hits / matchTotal),
-    precision: round(retrievedTotal === 0 ? 1 : retrievedRelevant / retrievedTotal),
+    matchCases,
+    scopeAccuracy: share(correctScope, cases.length),
+    hitRate: share(hits, matchCases),
+    precision: share(retrievedRelevant, retrievedTotal),
     confusionPairs: [...confusionPairs],
     failures,
   }
@@ -132,7 +139,9 @@ export function evalToGaps(summary: EvalSummary, source = 'amk eval'): GapObserv
 
 /** Absolute failures: each one fails a run on its own, with or without a baseline. */
 export function checkThresholds(summary: EvalSummary, thresholds: EvalThresholds = defaultThresholds): string[] {
+  if (summary.total === 0) return ['no eval cases: nothing was measured']
   const violations: string[] = []
+  if (summary.matchCases === 0) violations.push('no match cases: hitRate not measured')
   if (summary.scopeAccuracy < thresholds.scopeAccuracy) violations.push(`scopeAccuracy ${summary.scopeAccuracy} < ${thresholds.scopeAccuracy}`)
   if (summary.hitRate < thresholds.hitRate) violations.push(`hitRate ${summary.hitRate} < ${thresholds.hitRate}`)
   if (summary.precision < thresholds.precision) violations.push(`precision ${summary.precision} < ${thresholds.precision}`)
