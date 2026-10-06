@@ -6,10 +6,54 @@
  * decides where bytes come from. See adapters/README.md for Nitro, Next.js,
  * HTTP and CMS variants.
  */
-import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
-import { dirname, join, relative, sep } from 'node:path'
+import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, realpathSync, writeFileSync } from 'node:fs'
+import { dirname, isAbsolute, join, relative, sep } from 'node:path'
 import type { GapRecord } from '../src/gaps.ts'
 import type { MemoryFileRaw } from '../src/types.ts'
+
+/**
+ * Resolve a root-relative path to an absolute one, refusing anything the OS
+ * would place outside `root`.
+ *
+ * String checks catch `../`, absolute and drive-letter forms; they cannot see a
+ * symlink or junction, so the deepest existing ancestor is also realpath'd and
+ * compared with the real root. That ancestor is where the OS will actually
+ * create the file. Both separators are treated as separators on every platform,
+ * so a path refused on Windows is refused on POSIX too.
+ */
+export function resolveInside(root: string, path: string): string {
+  const refuse = (): never => {
+    throw new Error(`refused: ${JSON.stringify(path)} resolves outside the memory root ${root}`)
+  }
+  const normalized = path.replace(/\\/g, '/')
+  if (normalized === '' || normalized.includes('\0') || normalized.startsWith('/') || /^[a-zA-Z]:/.test(normalized)
+    || isAbsolute(path) || normalized.split('/').includes('..')) refuse()
+
+  const realRoot = realpathSync(root)
+  const target = join(realRoot, normalized)
+  for (let probe = target; ; probe = dirname(probe)) {
+    let real: string
+    try {
+      real = realpathSync(probe)
+    } catch {
+      // Exists as a link but resolves nowhere: following it would create the
+      // file wherever the link points, so treat it as an escape.
+      if (isLink(probe)) refuse()
+      continue
+    }
+    const inside = relative(realRoot, real)
+    if (inside === '..' || inside.startsWith(`..${sep}`) || isAbsolute(inside)) refuse()
+    return target
+  }
+}
+
+function isLink(path: string): boolean {
+  try {
+    return lstatSync(path).isSymbolicLink()
+  } catch {
+    return false
+  }
+}
 
 /** Recursively collect every `.md` file under `root`, path-relative to it. */
 export function readMemoryDir(root: string): MemoryFileRaw[] {
@@ -21,6 +65,8 @@ export function readMemoryDir(root: string): MemoryFileRaw[] {
         if (entry.name === 'node_modules' || entry.name === '.git') continue
         walk(full)
       } else if (entry.name.endsWith('.md')) {
+        // readFileSync follows a symlinked file wherever it points; confine it.
+        if (entry.isSymbolicLink()) resolveInside(root, relative(root, full))
         files.push({
           path: relative(root, full).split(sep).join('/'),
           content: readFileSync(full, 'utf8'),
@@ -46,8 +92,12 @@ export interface WriteResult {
 export function writeMemoryFiles(root: string, files: MemoryFileRaw[]): WriteResult {
   const written: string[] = []
   const unchanged: string[] = []
-  for (const file of files) {
-    const target = join(root, file.path)
+  mkdirSync(root, { recursive: true })
+  // Every path is checked before the first byte lands: one escaping path
+  // refuses the batch, so a refusal never leaves a partial write behind.
+  const targets = files.map((file) => resolveInside(root, file.path))
+  for (const [index, file] of files.entries()) {
+    const target = targets[index]
     if (existsSync(target) && readFileSync(target, 'utf8').replace(/\r\n/g, '\n') === file.content.replace(/\r\n/g, '\n')) {
       unchanged.push(file.path)
       continue
