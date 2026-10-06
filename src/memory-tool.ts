@@ -122,6 +122,12 @@ export function toRelativePath(input: string): string | null {
     if (normalized !== MEMORY_ROOT && !normalized.startsWith(`${MEMORY_ROOT}/`)) return null
     if (normalized.split('/').includes('..')) return null
     if (normalized.includes('\0')) return null
+    // What follows the prefix must be relative: `/memories//etc` and
+    // `/memories/C:/x` survive the `..` check but name an absolute or UNC path
+    // to any caller that resolves rather than joins. A colon is also how
+    // Windows addresses a hidden alternate data stream.
+    if (normalized.startsWith(`${MEMORY_ROOT}//`)) return null
+    if (normalized.includes(':')) return null
   }
 
   const normalized = decoded.replace(/\\/g, '/')

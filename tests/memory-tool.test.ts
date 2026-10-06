@@ -13,7 +13,7 @@
 import assert from 'node:assert/strict'
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { dirname, join } from 'node:path'
+import { dirname, join, posix, win32 } from 'node:path'
 import { afterEach, beforeEach, describe, it } from 'node:test'
 
 import { createMemoryToolHandler } from '../adapters/memory-tool.ts'
@@ -61,6 +61,27 @@ describe('path traversal protection', () => {
   for (const path of rejected) {
     it(`rejects ${JSON.stringify(path)}`, () => {
       assert.equal(toRelativePath(path), null)
+    })
+  }
+
+  // S06: these passed the `..` check but came back absolute, so any caller
+  // that resolves instead of joins lands outside the root.
+  const absoluteAfterPrefix = [
+    '/memories//etc/passwd',
+    '/memories/%2Fetc%2Fpasswd',
+    '/memories/C:/Windows/win.ini',
+    '/memories/C:\\Windows\\win.ini',
+    '/memories/c%3A%5CWindows%5Cwin.ini',
+    '/memories/\\\\server\\share\\x.md',
+    '/memories/pricing/plans.md:hidden',
+  ]
+  for (const path of absoluteAfterPrefix) {
+    it(`never yields an absolute, drive or stream path for ${JSON.stringify(path)}`, () => {
+      const relative = toRelativePath(path)
+      if (relative !== null) {
+        assert.equal(posix.isAbsolute(relative) || win32.isAbsolute(relative) || relative.includes(':'), false, relative)
+      }
+      assert.equal(relative, null)
     })
   }
 
