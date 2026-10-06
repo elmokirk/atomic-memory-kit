@@ -74,7 +74,7 @@ ${style.bold('amk')} — atomic memory kit
   ${style.bold('amk index')}                       regenerate the scope index atom
 
   ${style.bold('amk eval')} [--update-baseline]    run eval cases, record eval gaps
-  ${style.bold('amk drift')}                       check external claims against atoms
+  ${style.bold('amk drift')}                       check external claims against atoms (exit 1 on drift)
   ${style.bold('amk expiring')} [--within 30]       knowledge past or nearing validUntil
   ${style.bold('amk gaps')} [--report] [--sync f]  show / render / reconcile the gap ledger
   ${style.bold('amk gaps add')} <topic>            record a gap by hand
@@ -434,6 +434,8 @@ summary: "One sentence that fully describes what this atom holds."
     if (findings.length === 0 && uncovered.length === 0) ok('no drift, every atom is exercised by a case')
     else console.log(`\n  ${findings.length} drift finding(s), ${uncovered.length} untested atom(s) recorded in the ledger.`)
     console.log()
+    // exitCode, not exit(): `doctor` calls this and must still run its later checks.
+    if (findings.length > 0) process.exitCode = 1
   },
 
   gaps() {
