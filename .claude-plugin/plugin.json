@@ -1,0 +1,39 @@
+{
+  "name": "amk",
+  "displayName": "Atomic Memory Kit",
+  "description": "A curated knowledge base of Markdown atoms with gap tracking: answers cite atom ids, and questions the knowledge base cannot answer become recorded gaps. Complements Claude Code memory (CLAUDE.md, auto memory); does not replace it. Read-only unless you enable writes. Needs Node >= 22.18.",
+  "author": {
+    "name": "Kirk Kleinau",
+    "url": "https://github.com/elmokirk"
+  },
+  "homepage": "https://github.com/elmokirk/atomic-memory-kit",
+  "repository": "https://github.com/elmokirk/atomic-memory-kit",
+  "license": "MIT",
+  "keywords": ["knowledge-base", "gap-tracking", "mcp", "markdown"],
+  "mcpServers": {
+    "memory": {
+      "command": "node",
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/agent/mcp-server.mjs",
+        "--config",
+        "${CLAUDE_PROJECT_DIR}/${user_config.config}",
+        "--allow-writes",
+        "${user_config.allow_writes}"
+      ]
+    }
+  },
+  "userConfig": {
+    "config": {
+      "type": "string",
+      "title": "Memory config",
+      "description": "Path to memory.config.json, relative to the project root. Its root and gapLedger fields may be absolute, to use a memory outside the project.",
+      "default": "memory.config.json"
+    },
+    "allow_writes": {
+      "type": "boolean",
+      "title": "Allow writes",
+      "description": "Off: the server refuses memory_apply, memory_gap_add, memory_gap_close, and memory_close_gaps with autoApply. On: those tools write atoms and the gap ledger.",
+      "default": false
+    }
+  }
+}
