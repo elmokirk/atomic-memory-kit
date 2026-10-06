@@ -99,7 +99,7 @@ export {
   renderGapReport,
   stripGapMarkers,
 } from './gaps.ts'
-export type { GapDetector, GapKind, GapLedger, GapObservation, GapRecord, GapStatus } from './gaps.ts'
+export type { GapDetector, GapDetectorOutput, GapKind, GapLedger, GapObservation, GapRecord, GapStatus } from './gaps.ts'
 
 export {
   checkThresholds,

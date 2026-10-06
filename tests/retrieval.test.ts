@@ -8,10 +8,10 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 
-import { defineMemoryConfig } from '../src/config.ts'
+import { defineMemoryConfig, resolveLanguageProfile } from '../src/config.ts'
 import { loadMemory } from '../src/loader.ts'
 import { normalize, stem, tokenize } from '../src/score.ts'
-import { searchMemory } from '../src/search.ts'
+import { buildQuery, searchMemory } from '../src/search.ts'
 import { validateAtom } from '../src/schema.ts'
 import { MemoryContractError } from '../src/types.ts'
 import type { MemoryFileRaw } from '../src/types.ts'
@@ -216,9 +216,85 @@ describe('budget discipline', () => {
     assert.equal(result.chunks.length >= 1, true)
   })
 
+  it('flags the top hit when it alone exceeds the budget', () => {
+    const tight = defineMemoryConfig({ ...config, charBudget: 10 })
+    const { base: tightBase } = loadMemory(FILES, tight)
+    const result = searchMemory(tightBase, 'what does it cost')
+    assert.equal(result.overBudget, true)
+    // Nothing joins an oversized first hit, edges included.
+    assert.deepEqual(result.chunks.map((chunk) => chunk.id), ['pricing.plans'])
+  })
+
+  it('never exceeds the budget silently, at any budget, edges included', () => {
+    const edgy = defineMemoryConfig({ ...config, edgeMaxChunks: 2, edgeReserveChars: 10 })
+    const { base: edgyBase } = loadMemory(FILES, edgy)
+    for (let budget = 0; budget <= 120; budget++) {
+      for (const query of ['what does it cost', 'price limits', 'website price quota']) {
+        const result = searchMemory(edgyBase, query, { charBudget: budget })
+        const used = result.chunks.reduce((sum, chunk) => sum + chunk.content.length, 0)
+        assert.equal(result.overBudget, used > budget, `budget ${budget}, query "${query}"`)
+        if (result.overBudget) assert.equal(result.chunks.length, 1, `budget ${budget}, query "${query}"`)
+      }
+    }
+  })
+
+  it('alwaysInclude atoms neither count against the budget nor appear as chunks', () => {
+    const huge = 'Scope covers pricing and product. '.repeat(200)
+    const files = FILES.map((file) => file.path === '_index.md'
+      ? { ...file, content: file.content.replace('Pricing, product.', huge) }
+      : file)
+    const { base: hugeBase } = loadMemory(files, config)
+    const result = searchMemory(hugeBase, 'what does it cost')
+    assert.equal(result.overBudget, false)
+    assert.ok(!result.chunks.some((chunk) => chunk.id === 'index.scope'))
+    assert.ok(result.chunks.some((chunk) => chunk.id === 'pricing.plans'))
+  })
+
   it('honours maxChunks', () => {
     const capped = defineMemoryConfig({ ...config, maxChunks: 1, edgeMaxChunks: 0 })
     const { base: cappedBase } = loadMemory(FILES, capped)
     assert.equal(searchMemory(cappedBase, 'price limits').chunks.length, 1)
+  })
+})
+
+describe('config defaults', () => {
+  it('mutating a returned config does not leak into the next one', () => {
+    const first = defineMemoryConfig()
+    first.categories.push('leaked')
+    first.intents.push('leaked')
+    first.contextCategories!['/leaked'] = ['leaked']
+    first.weights.keywords = 99
+    first.language!.stopwords!.push('leaked')
+    first.language!.fold!['x'] = 'leaked'
+    first.language!.stemSuffixes!.push('leaked')
+
+    const second = defineMemoryConfig()
+    assert.deepEqual(second.categories, [])
+    assert.deepEqual(second.intents, [])
+    assert.deepEqual(second.contextCategories, {})
+    assert.equal(second.weights.keywords, 3)
+    assert.ok(!second.language!.stopwords!.includes('leaked'))
+    assert.equal(second.language!.fold!['x'], undefined)
+    assert.ok(!second.language!.stemSuffixes!.includes('leaked'))
+  })
+
+  it('mutating a resolved language profile does not leak into the next one', () => {
+    resolveLanguageProfile().fold['x'] = 'leaked'
+    assert.equal(resolveLanguageProfile().fold['x'], undefined)
+  })
+})
+
+describe('history window', () => {
+  const history = [{ role: 'user' as const, content: 'what does the starter plan cost' }]
+
+  it('historyContextMessages 0 uses no history at all', () => {
+    const none = defineMemoryConfig({ ...config, historyContextMessages: 0 })
+    const { base: noneBase } = loadMemory(FILES, none)
+    assert.equal(buildQuery('and the weather', noneBase, { history }), 'and the weather')
+    assert.equal(searchMemory(noneBase, 'and the weather', { history }).scopeStatus, 'no_match')
+  })
+
+  it('a positive window still pulls the trailing user turns into the query', () => {
+    assert.equal(searchMemory(base, 'and the weather', { history }).scopeStatus, 'match')
   })
 })

@@ -9,6 +9,7 @@ import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 
 import {
+  GAP_MARKER_PATTERN,
   createGapDetector,
   createGapLedger,
   extractGapTopics,
@@ -71,6 +72,93 @@ describe('streaming detector', () => {
     detector.push('[GAP: first]')
     detector.reset()
     assert.deepEqual(detector.push('[GAP: second]'), ['second'])
+  })
+})
+
+/*
+ * The oracle for every streaming test below is the batch regex over the whole
+ * text: however a stream is cut, the decoder must find exactly the markers
+ * `GAP_MARKER_PATTERN` finds and show exactly the text it leaves behind.
+ */
+function batch(text: string): { text: string, topics: string[] } {
+  return { text: text.replace(GAP_MARKER_PATTERN, ''), topics: extractGapTopics(text) }
+}
+
+function stream(deltas: string[]): { text: string, topics: string[] } {
+  const detector = createGapDetector()
+  let text = ''
+  const topics: string[] = []
+  for (const delta of deltas) {
+    const out = detector.write(delta)
+    text += out.text
+    topics.push(...out.topics)
+  }
+  const last = detector.end()
+  return { text: text + last.text, topics: [...topics, ...last.topics] }
+}
+
+// Hostile on purpose: brackets that are not markers, a near-miss head, an empty
+// topic, a marker with no space, a marker opened inside a bracket, runs of
+// whitespace and newlines around markers.
+const SAMPLE = 'See [1] and [GA] or [GAME].  Ask us. [GAP: sso pricing]\n\n[GAP: ]x [[GAP:refunds]  end '
+
+describe('streaming decoder', () => {
+  it('is lossless at every single split point', () => {
+    for (let cut = 0; cut <= SAMPLE.length; cut++) {
+      assert.deepEqual(stream([SAMPLE.slice(0, cut), SAMPLE.slice(cut)]), batch(SAMPLE), `cut at ${cut}`)
+    }
+  })
+
+  it('is lossless at every pair of split points', () => {
+    for (let a = 0; a <= SAMPLE.length; a++) {
+      for (let b = a; b <= SAMPLE.length; b++) {
+        const deltas = [SAMPLE.slice(0, a), SAMPLE.slice(a, b), SAMPLE.slice(b)]
+        assert.deepEqual(stream(deltas), batch(SAMPLE), `cuts at ${a}, ${b}`)
+      }
+    }
+  })
+
+  it('finds every marker when markers are farther apart than any tail', () => {
+    const filler = 'Plain answer text that goes on for a while. '.repeat(10)
+    const text = `${filler}[GAP: first]${filler}[GAP: second]${filler}[GAP: third]${filler}`
+    for (const size of [1, 3, 7, 64, 127, 128, 129, text.length]) {
+      const deltas = text.match(new RegExp(`[\\s\\S]{1,${size}}`, 'g'))!
+      assert.deepEqual(stream(deltas), batch(text), `chunk size ${size}`)
+    }
+    assert.deepEqual(batch(text).topics, ['first', 'second', 'third'])
+  })
+
+  it('reassembles a marker split across one-character deltas', () => {
+    const text = 'answer  [GAP: tiny chunks]  end'
+    assert.deepEqual(stream([...text]), { text: 'answer    end', topics: ['tiny chunks'] })
+  })
+
+  it('releases text that cannot be a marker without waiting for the end', () => {
+    const detector = createGapDetector()
+    assert.deepEqual(detector.write('See [1] and [GAME] now'), { text: 'See [1] and [GAME] now', topics: [] })
+    assert.deepEqual(detector.write('[GAP: x'.padEnd(100, 'y')), { text: '[GAP: x'.padEnd(100, 'y'), topics: [] })
+  })
+
+  it('holds back only a possible marker, then releases it verbatim at end of stream', () => {
+    const detector = createGapDetector()
+    assert.deepEqual(detector.write('Truncated answer [GAP: pric'), { text: 'Truncated answer ', topics: [] })
+    assert.deepEqual(detector.end(), { text: '[GAP: pric', topics: [] })
+    // end() leaves a clean detector for the next turn.
+    assert.deepEqual(detector.write('[GAP: next]'), { text: '', topics: ['next'] })
+  })
+
+  it('reset drops held text so it cannot leak into the next turn', () => {
+    const detector = createGapDetector()
+    detector.write('half a marker [GA')
+    detector.reset()
+    assert.deepEqual(detector.write('P: no]'), { text: 'P: no]', topics: [] })
+  })
+
+  it('push still reports topics from markers far apart (R01)', () => {
+    const detector = createGapDetector()
+    const filler = 'x'.repeat(300)
+    const found = [`${filler}[GAP: one]`, filler, '[GAP: two]', filler].flatMap((delta) => detector.push(delta))
+    assert.deepEqual(found, ['one', 'two'])
   })
 })
 

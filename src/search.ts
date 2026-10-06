@@ -56,10 +56,11 @@ function matchContextCategories(context: string | undefined, config: MemoryConfi
 
 /** Query = current message + trailing user messages from history. */
 export function buildQuery(message: string, base: MemoryBase, options: SearchOptions = {}): string {
-  const contextMessages = (options.history ?? [])
-    .filter((entry) => entry.role === 'user')
-    .slice(-base.config.historyContextMessages)
-    .map((entry) => entry.content)
+  const window = base.config.historyContextMessages
+  // `slice(-0)` is `slice(0)`, the whole history; a window of 0 must mean none.
+  const contextMessages = window > 0
+    ? (options.history ?? []).filter((entry) => entry.role === 'user').slice(-window).map((entry) => entry.content)
+    : []
   return [...contextMessages, message].join('\n')
 }
 
@@ -125,8 +126,8 @@ export function searchMemory(base: MemoryBase, message: string, options: SearchO
       if (chunks.length >= maxChunks) break
       if (entry.score < base.config.minScore) break
       const length = entry.atom.body.length
-      // The first chunk is always admitted, even if oversized: returning a
-      // truncated-but-relevant answer beats returning nothing.
+      // The first chunk is always admitted, even if oversized: a relevant
+      // answer beats returning nothing. The overflow is reported, not hidden.
       if (chunks.length > 0 && usedChars + length > seedBudget) continue
       chunks.push({
         id: entry.atom.id,
@@ -140,7 +141,7 @@ export function searchMemory(base: MemoryBase, message: string, options: SearchO
     usedChars = expandEdges(base, chunks, scored, usedChars, charBudget, maxEdges)
   }
 
-  return { chunks, scopeStatus, bestScore }
+  return { chunks, scopeStatus, bestScore, overBudget: usedChars > charBudget }
 }
 
 /**
