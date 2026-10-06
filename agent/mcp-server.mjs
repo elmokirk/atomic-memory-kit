@@ -62,14 +62,22 @@ import { createServer } from 'node:http'
 import { readFileSync } from 'node:fs'
 import { dirname, isAbsolute, join, resolve } from 'node:path'
 
-import { readGapLedger, readMemoryDir, writeGapLedger, writeMemoryFiles } from '../adapters/fs.ts'
-import { compileMemory, renderBundle, renderDigest } from '../src/compile.ts'
-import { defineMemoryConfig } from '../src/config.ts'
-import { CONTRACT_VERSION, describeContract } from '../src/contract.ts'
-import { createGapLedger, renderGapReport } from '../src/gaps.ts'
-import { loadMemory } from '../src/loader.ts'
-import { draftFromMarkdown, materialize, planApply } from '../src/restructure.ts'
-import { searchMemory } from '../src/search.ts'
+// Same check as cli/amk.mjs, before any .ts import. stderr, because stdout
+// carries JSON-RPC.
+const [nodeMajor, nodeMinor] = process.versions.node.split('.').map(Number)
+if (nodeMajor < 22 || (nodeMajor === 22 && nodeMinor < 18)) {
+  console.error(`amk-mcp requires Node >= 22.18.0, this is ${process.versions.node}. Upgrade Node and re-run.`)
+  process.exit(1)
+}
+
+const { readGapLedger, readMemoryDir, writeGapLedger, writeMemoryFiles } = await import('../adapters/fs.ts')
+const { compileMemory, renderBundle, renderDigest } = await import('../src/compile.ts')
+const { defineMemoryConfig } = await import('../src/config.ts')
+const { CONTRACT_VERSION, describeContract } = await import('../src/contract.ts')
+const { createGapLedger, renderGapReport } = await import('../src/gaps.ts')
+const { loadMemory } = await import('../src/loader.ts')
+const { draftFromMarkdown, materialize, planApply } = await import('../src/restructure.ts')
+const { searchMemory } = await import('../src/search.ts')
 
 const PROTOCOL_VERSION = '2026-07-28'
 const SUPPORTED_VERSIONS = [PROTOCOL_VERSION, '2025-11-25', '2025-06-18']

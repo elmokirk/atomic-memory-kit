@@ -84,15 +84,16 @@ transport.
 
 ```ts
 const detector = createGapDetector()
-
-for await (const delta of modelStream) {
-  for (const topic of detector.push(delta)) {
+const forward = ({ text, topics }) => {
+  for (const topic of topics) {
     ledger.observe({ kind: 'runtime', topic, source: route })
     emit({ type: 'gap', topic })          // optional: your debug channel
   }
-  emit({ type: 'delta', text: stripGapMarkers(delta) })
+  if (text) emit({ type: 'delta', text })
 }
-detector.reset()
+
+for await (const delta of modelStream) forward(detector.write(delta))
+forward(detector.end())                   // flush; also resets for the next turn
 ```
 
 ### Citation verification, if you use citations

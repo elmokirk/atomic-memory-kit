@@ -46,14 +46,14 @@ process.
 
 ```bash
 node agent/mcp-server.mjs --config ./memory.config.json            # stdio
-node agent/mcp-server.mjs --config ./memory.config.json --http 8787 # streamable HTTP
+node agent/mcp-server.mjs --config ./memory.config.json --http 8787 # streamable HTTP, 127.0.0.1 only
 ```
 
 ---
 
 ## Quickstart
 
-Requires **Node ≥ 22.6** (native TypeScript type stripping — that is why there is
+Requires **Node ≥ 22.18** (native TypeScript type stripping — that is why there is
 no build step).
 
 ```bash
@@ -61,9 +61,9 @@ git clone <this-repo> && cd atomic-memory-kit
 npm link                 # optional: puts `amk` on your PATH
 
 cd example
-node ../cli/amk.mjs validate    # 5 atoms, contract clean, graph intact
+node ../cli/amk.mjs validate    # 6 atoms, contract clean, graph intact
 node ../cli/amk.mjs eval        # scope accuracy, hit rate, precision
-node ../cli/amk.mjs drift       # finds the planted price inconsistency
+node ../cli/amk.mjs drift       # finds the planted SLA contradiction, exits 1
 node ../cli/amk.mjs compile     # writes bundle.md + compiled.json + digest.md
 node ../cli/amk.mjs search "what does it cost"
 ```
@@ -159,15 +159,15 @@ if (result.scopeStatus === 'no_match') {
 Gap detection during streaming:
 
 ```ts
-import { createGapDetector, stripGapMarkers } from 'atomic-memory-kit'
+import { createGapDetector } from 'atomic-memory-kit'
 
 const detector = createGapDetector()
-for await (const delta of modelStream) {
-  for (const topic of detector.push(delta)) {
-    ledger.observe({ kind: 'runtime', topic, source: route })
-  }
-  send(stripGapMarkers(delta))   // the user never sees the marker
+const record = ({ text, topics }) => {
+  for (const topic of topics) ledger.observe({ kind: 'runtime', topic, source: route })
+  send(text)                     // the user never sees the marker
 }
+for await (const delta of modelStream) record(detector.write(delta))
+record(detector.end())           // releases text held back at the stream's end
 ```
 
 The marker survives being split across deltas — that is the normal case with
@@ -199,7 +199,7 @@ cli/                thin shell over src/
 agent/              skills, MCP server (2026-07-28), AGENTS.md snippet
 docs/               deep dives + porting guide + MCP reference
 example/            working memory with planted gaps
-tests/              203 tests, node:test, zero deps
+tests/              270 tests, node:test, zero deps
 ```
 
 ---

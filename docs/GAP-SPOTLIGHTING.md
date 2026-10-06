@@ -70,19 +70,25 @@ production.
 
 ```ts
 const detector = createGapDetector()
-
-for await (const delta of modelStream) {
-  for (const topic of detector.push(delta)) {
-    ledger.observe({ kind: 'runtime', topic, source: route })
-  }
-  send(stripGapMarkers(delta))
+const forward = ({ text, topics }) => {
+  for (const topic of topics) ledger.observe({ kind: 'runtime', topic, source: route })
+  send(text)
 }
-detector.reset()
+
+for await (const delta of modelStream) forward(detector.write(delta))
+forward(detector.end())
 ```
 
-`createGapDetector` keeps a rolling tail (128 chars by default), matches against
-it, and reports each marker exactly once. Covered by tests down to
-character-sized deltas.
+`write` returns the visible text with markers removed and the topics of markers
+it completed. It holds back only text that could still become a marker, so a
+marker split across any number of deltas is found once and never leaks, and
+ordinary text passes through unchanged. `end` releases anything held back; a
+marker that never closed is shown as written, which is what the batch regex does
+too. Tested at every split point of the fixtures and with one-character deltas.
+
+`push(delta)` still returns topics for callers that display text some other way.
+Running `stripGapMarkers` on each delta is wrong for display: it cannot see a
+marker split across deltas.
 
 **Always strip before display.** The marker is instrumentation. The user should
 see a graceful admission of ignorance, not internal syntax.
@@ -128,8 +134,13 @@ Three metrics:
 - **scopeAccuracy** — how often the gate was right. Below 0.95 means the
   threshold is wrong.
 - **hitRate** — of the match cases, how often every expected id was available.
+  Only cases expected to match count, so it stays between 0 and 1.
 - **precision** — of everything retrieved, how much was relevant. The number that
   degrades as a memory grows.
+
+Any `mustNotRetrieve` hit fails the run on its own, whatever the scores and
+whatever the baseline. A suite with no cases, or no match cases, fails too: an
+empty set reads 1 by convention, and an unmeasured number must not pass.
 
 Absolute thresholds catch a bad memory. The **baseline** catches *getting worse*,
 which is the failure that actually happens:

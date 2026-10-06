@@ -8,6 +8,16 @@ stated too.
 
 ## Retrieval
 
+**The context budget can be exceeded, but never silently.** If the best atom
+alone is larger than `charBudget`, it is returned whole and nothing else is
+added, and the result carries `overBudget: true`. Cutting the atom could drop
+the one fact that was asked for. The budget covers retrieved chunks only:
+`alwaysInclude` atoms sit outside it, so a consumer that injects them must count
+them separately.
+
+**`historyContextMessages: 0` means no history.** Before the PoC fixes, 0 meant
+all of it.
+
 **No semantic understanding.** Scoring is keyword, synonym and field matching
 with umlaut folding and a light suffix stemmer. A question phrased entirely in
 vocabulary that appears nowhere in an atom will not find it, no matter how
@@ -114,6 +124,12 @@ indistinguishable from having no gaps. Smaller models comply less reliably.
 > catches the "nothing at all" case regardless. Treat runtime gaps as a bonus
 > signal, not a guarantee.
 
+**The streaming detector holds back possible markers.** After `[GAP:` it
+withholds text until the marker closes or more than 80 characters of topic have
+passed. A model that writes `[GAP:` and then stalls delays that text until
+`end()`. An unclosed marker at the end of the stream is shown as written, the
+same as the batch regex treats it; call `end()` or it is never released.
+
 **Gap topics are model-generated free text.** Deduplication normalizes case and
 whitespace, but *"SSO pricing"* and *"cost of single sign-on"* are two records.
 Counts are therefore a lower bound on real demand.
@@ -169,9 +185,19 @@ versa. For anything where a few hours matter, this is the wrong tool.
 processes writing concurrently will lose records. Fine for CLI and single-server
 use; not safe for multi-instance serverless without an external store.
 
+**A corrupt ledger line is reported, then lost on the next write.** Reading
+keeps every valid line and reports each corrupt one with its line number (a
+process warning `AMK_CORRUPT_LEDGER_LINE`, or a callback). The next sync rewrites
+the file without it. Fix or back up the file when the warning appears.
+
 ---
 
 ## Evaluation
+
+**A forbidden retrieval fails the run outright.** Any `mustNotRetrieve` hit is
+an error, whatever the aggregate scores and whatever the baseline. A suite with
+no cases, or with only negative cases, also fails, because nothing was measured.
+Memories whose eval file holds only negative cases need at least one match case.
 
 **Eval cases are hand-written.** Nothing generates them. Without at least two per
 atom, precision rots invisibly as the memory grows.
@@ -195,9 +221,14 @@ the ruler.
 
 ## Runtime
 
-**Node ≥ 22.6 for the CLI and tests**, because `src/` ships as TypeScript and
-relies on native type stripping rather than a build step. Older Node cannot run
-the CLI. The library imports fine into any bundler.
+**Node ≥ 22.18 for the CLI, the MCP server and tests**, because `src/` ships as
+TypeScript and relies on type stripping, which is on by default from 22.18. Both
+entry points check the version first and exit with a one-line message on older
+Node. The library imports fine into any bundler.
+
+**Not installable from npm as is.** Node refuses to strip types under
+`node_modules`, so a registry package would need a build step that emits
+JavaScript. Use the repository directly.
 
 **Type-strippable syntax only.** No enums, no parameter properties, no
 namespaces, no decorators. If you extend `src/`, keep it erasable or the no-build
@@ -217,6 +248,14 @@ and no partial load.
 
 **No concurrency control anywhere.** No file locking on import, no ledger
 locking. Single-writer assumptions throughout.
+
+**Writes and reads are confined to the memory root.** `../`, absolute, drive,
+UNC and stream paths are refused, and links are resolved so a symlink or
+junction cannot lead outside. The check happens before any byte is written, but
+there is a short window between the check and the write in which a concurrent
+process could swap a directory for a link. The read-side test for a symlinked
+atom file is skipped on Windows machines that cannot create file symlinks
+(no Developer Mode), so that path is verified on POSIX only.
 
 ---
 
@@ -241,6 +280,10 @@ external claims and nothing else.
 blocks the batch. An accepted `update` overwrites the whole file, including
 anything a human edited by hand outside the frontmatter. Use git.
 
+**All-or-nothing applies to validation, not to the disk.** Files are written one
+by one. If the disk fails halfway, earlier files of the batch are already
+changed and nothing rolls them back.
+
 ---
 
 ## The MCP server
@@ -256,9 +299,13 @@ window. Nothing here needs single-use semantics; if you add a tool that does, th
 spec requires enforcing it server-side, and this server has no store to do that
 with.
 
-**No authorization.** The server exposes everything to whoever can reach the
-socket, and `memory_apply` writes files. Bind to localhost or put a gateway in
-front. There is no OAuth, no token check, no per-tool permission.
+**Loopback by default; writes over HTTP need a token.** `--http` binds
+`127.0.0.1` unless `--host` names another address, and the startup log prints
+the address actually bound. Without `AMK_AUTH_TOKEN`, the writing tools
+(`memory_apply`, `memory_gap_add`, `memory_gap_close`, `memory_close_gaps` with
+`autoApply`) are refused over HTTP; read tools stay open to whoever can reach the
+socket. With `--host 0.0.0.0` and no token, that means the whole network can
+read the memory. With a token set, every request needs it. stdio is unaffected.
 
 **`subscriptions/listen` is not implemented.** Clients will not be told when a
 human edits atoms. `ttlMs` is a hint, not a guarantee, and `"watch": true`

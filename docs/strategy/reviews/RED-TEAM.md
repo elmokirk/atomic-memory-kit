@@ -14,28 +14,28 @@ The preceding review used source inspection and reported 19 synthetic probes aga
 
 | Finding | Evidence | Risk/condition | Owning ticket |
 |---|---|---|---|
-| Later GAP marker lost after first leaves rolling tail | R01 | Missing diagnostics in long streams | B0-T04 |
-| Split marker leaks; per-delta whitespace removed | R02-R03 | Output corruption in README consumption pattern | B0-T04 |
+| Later GAP marker lost after first leaves rolling tail | R01 | Missing diagnostics in long streams | B0-T04; fixed `8251de1` (PoC I2) |
+| Split marker leaks; per-delta whitespace removed | R02-R03 | Output corruption in README consumption pattern | B0-T04; fixed `8251de1` (PoC I2) |
 | String arrays change boolean-like strings and apostrophes; unmatched quote accepted | R04-R06 | Supported round-trip claim fails on edge cases | B0-T02 |
-| First result exceeds character budget | R07 | Intentional behavior conflicts with hard-budget claims | B0-T03 |
+| First result exceeds character budget | R07 | Intentional behavior conflicts with hard-budget claims | B0-T03; now reported as `overBudget`, `7792fee` (PoC I2) |
 | Context boost alone reaches match threshold | R08 | Configured boost risk, not a claim about defaults | B0-T03 |
-| History count zero includes history | R09 | `slice(-0)` is not an empty slice | B0-T03 |
-| Hit rate exceeds 1; forbidden result passes aggregate threshold | R10-R11 | Evaluator can mask retrieval defects | B0-T03 |
-| Write failure leaves earlier file changed | R12 | Per-file writes are not a batch transaction | B0-T05 |
-| Symlink escapes read/write root | R13 | Demonstrated with sandbox-owned symlink and sentinel | B0-T05 |
-| Parent path accepted by exported writer | R14 | Direct adapter API only; not every CLI/MCP call proven reachable | B0-T05 |
-| Corrupt ledger line silently skipped | R15 | Invisible evidence loss | B0-T05 |
-| HTTP `listen(port)` binds wildcard | R16 | Reproduced 2026-10-05 on the full server: listens on `0.0.0.0` and `[::]`, log prints `127.0.0.1`, token off by default, `memory_apply` writes. Highest priority | B0-T06 |
+| History count zero includes history | R09 | `slice(-0)` is not an empty slice | B0-T03; fixed `2124737` (PoC I2) |
+| Hit rate exceeds 1; forbidden result passes aggregate threshold | R10-R11 | Evaluator can mask retrieval defects | B0-T03; fixed `ca6bec5`, `aa75cf6` (PoC I3) |
+| Write failure leaves earlier file changed | R12 | Per-file writes are not a batch transaction | B0-T05; documented as a limit in LIMITATIONS.md, not fixed |
+| Symlink escapes read/write root | R13 | Demonstrated with sandbox-owned symlink and sentinel | B0-T05; fixed `335e522` (PoC I1); file-symlink read test skipped on Windows without Developer Mode |
+| Parent path accepted by exported writer | R14 | Direct adapter API only; not every CLI/MCP call proven reachable | B0-T05; fixed `335e522` (PoC I1) |
+| Corrupt ledger line silently skipped | R15 | Invisible evidence loss | B0-T05; now reported with line number, `4e819de` (PoC I1); still dropped on next write, documented |
+| HTTP `listen(port)` binds wildcard | R16 | Reproduced 2026-10-05 on the full server: listens on `0.0.0.0` and `[::]`, log prints `127.0.0.1`, token off by default, `memory_apply` writes. Highest priority | B0-T06; fixed `13b6eba` (PoC I1): loopback default, `--host`, writes over HTTP need a token |
 | Raw `.ts` package import fails under node_modules | R17 | Isolated installed-path pattern, not actual AMK tarball | B0-T07 |
-| Bare TS import fails within declared Node range | R18 | Observed on Node 22.16.0 without required flag | B0-T07 |
-| Config defaults share mutable arrays/maps | R19 | Aliasing if callers mutate returned config | B0-T03 |
+| Bare TS import fails within declared Node range | R18 | Observed on Node 22.16.0 without required flag | B0-T07; floor raised to 22.18.0 with startup check (PoC I4, `bee26fe`) |
+| Config defaults share mutable arrays/maps | R19 | Aliasing if callers mutate returned config | B0-T03; fixed `8011a34` (PoC I2) |
 | CLI import writes before validating merged state | S01 | Different guarantees from MCP proposal path | B0-T05 |
 | Extension-only changes absent from diff comparison | S02 | Future metadata updates may be skipped | B0-T02 |
 | CLI and MCP resolve relative roots differently | S03 | Wrong root when launched from another directory | B0-T05 |
 | Tool catalog and integration README diverge | S04 | Documentation can describe unavailable operations | B0-T06 |
 | Scope miss described as proven absence; recurrence as people count | S05 | Product claims exceed evidence | B0-T06, B1-T03 |
-| `src/memory-tool.ts` path resolution never reviewed | S06 | Added after baseline `af24e19`; same confinement questions as R13/R14 | B0-T05 |
-| `drift` exits 0 on an error finding; `eval` modifies tracked `example/.memory-out/gaps.jsonl` | S07 | Found walking the quickstart, 2026-10-05 | B0-T08 |
+| `src/memory-tool.ts` path resolution never reviewed | S06 | Added after baseline `af24e19`; same confinement questions as R13/R14 | B0-T05; fixed `ff85d15` (PoC I1) |
+| `drift` exits 0 on an error finding; `eval` modifies tracked `example/.memory-out/gaps.jsonl` | S07 | Found walking the quickstart, 2026-10-05 | B0-T08; drift fixed `a737b1b` (PoC I4); the eval part did not reproduce: `.memory-out/` is ignored and was never tracked (test in `5c29ab9`) |
 
 ## Source locations
 

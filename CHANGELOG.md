@@ -23,6 +23,49 @@ Subsections to use: `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `Secur
 
 ## [Unreleased]
 
+### Security
+
+- `--http` binds `127.0.0.1` by default; `--host` binds elsewhere. The startup
+  log prints the address actually bound (it used to print `127.0.0.1` while
+  listening on every interface).
+- Writing tools over HTTP (`memory_apply`, `memory_gap_add`, `memory_gap_close`,
+  `memory_close_gaps` with `autoApply`) are refused unless `AMK_AUTH_TOKEN` is set.
+- Reads and writes are confined to the memory root: `../`, absolute, drive, UNC
+  and stream paths are refused, and symlinks or junctions cannot lead outside.
+  Applies to `adapters/fs.ts`, `adapters/memory-tool.ts` and `src/memory-tool.ts`.
+
+### Fixed
+
+- Streaming gap detection lost a second marker more than 128 characters after
+  the first, and per-delta stripping leaked split markers and dropped whitespace.
+- `historyContextMessages: 0` used the whole history.
+- Config defaults were shared between calls; mutating one leaked into the next.
+- Eval hit rate could exceed 1; a forbidden retrieval passed when aggregate
+  scores passed.
+- A corrupt ledger line was skipped silently; it is now reported with its line
+  number (warning `AMK_CORRUPT_LEDGER_LINE` or a callback).
+- `amk drift` (and `doctor`) exited 0 when reporting an error finding.
+- `npm run check`, `npm run mcp` and `npm run mcp:http` failed from the
+  repository root; they now run against `example/`.
+
+### Added
+
+- `GapDetector.write(delta)` and `end()`, returning visible text and completed
+  topics. Replace `push(delta)` plus `stripGapMarkers(delta)` with them; `push`
+  still works for topics only.
+- `MemorySearchResult.overBudget`: true when the best atom alone exceeds the
+  character budget. The atom is still returned whole.
+- `resolveInside(root, path)` in `adapters/fs.ts`.
+- Eval summary field `matchCases`.
+
+### Changed
+
+- Node floor raised to 22.18.0, the first 22.x with type stripping on by
+  default. The CLI and the MCP server check it first and exit with a clear
+  message.
+- An eval suite with no cases, or only negative cases, now fails.
+- `writeMemoryFiles` creates a missing root folder.
+
 ### Contract 1.1.0 — durability and provenance
 
 Additive. **There is nothing to migrate.** All four fields are optional, every

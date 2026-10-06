@@ -1,5 +1,6 @@
 node_modules/
 .memory-out/
+.claude/worktrees/
 *.log
 .DS_Store
 Thumbs.db

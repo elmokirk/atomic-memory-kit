@@ -62,7 +62,7 @@ node /path/to/atomic-memory-kit/agent/mcp-server.mjs \
 
 | Variable | Why |
 |---|---|
-| `AMK_AUTH_TOKEN` | Bearer token, compared in constant time. Without it, anyone who can reach the port can write to your memory. The server warns on startup. |
+| `AMK_AUTH_TOKEN` | Bearer token, compared in constant time. Without it, the writing tools are refused over HTTP and read tools are open to whoever reaches the port. The server binds `127.0.0.1` unless `--host` says otherwise. |
 | `AMK_STATE_SECRET` | Signs the MRTR `requestState`. Required across replicas, or gap-closing retries fail when a retry lands on a different process. |
 
 Note the token — you need it in 2.3.
@@ -208,7 +208,7 @@ memory to be one capability among many.
 | | Risk |
 |---|---|
 | stdio | Whatever can spawn the process can read and write the memory. Same as any local file. |
-| HTTP without `AMK_AUTH_TOKEN` | Anyone who can reach the port can rewrite your memory. |
+| HTTP without `AMK_AUTH_TOKEN` | Writes are refused. Anyone who can reach the port can read the memory; by default that is only this machine (`127.0.0.1`). |
 | HTTP with the token | One static shared secret. No OAuth, no per-tool permissions, no rate limiting, no audit of who wrote what. |
 | Tunnel in development | Your memory is on the public internet for the life of the tunnel. |
 

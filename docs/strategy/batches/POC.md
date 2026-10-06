@@ -8,10 +8,10 @@ The integrator owns this table. Status values: `planned`, `in_progress`, `awaiti
 
 | Increment | Status | Branch | Evidence |
 |---|---|---|---|
-| I1 Security | planned | `poc/i1-security` | – |
-| I2 Chatbot correctness | planned | `poc/i2-chatbot` | – |
-| I3 Evaluation | planned | `poc/i3-eval` | – |
-| I4 Starter and CLI | planned | `poc/i4-cli` | – |
+| I1 Security | done | `poc/i1-security` | `13b6eba` R16, `335e522` R13/R14, `ff85d15` S06, `4e819de` R15 |
+| I2 Chatbot correctness | done | `poc/i2-chatbot` | `2124737` R09, `8011a34` R19, `7792fee` R07, `8251de1` R01-R03 |
+| I3 Evaluation | done | `poc/i3-eval` | `ca6bec5` R10, `aa75cf6` R11, `d915782` zero cases |
+| I4 Starter and CLI | done | `poc/i4-cli` | `a737b1b` drift, `4455123` check, `bee26fe` Node floor, `5c29ab9` smoke; S07 eval part not reproduced |
 | I5 Chatbot demo | planned | `poc/i5-demo` | – |
 
 ## Definition of Done for every increment
