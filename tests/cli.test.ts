@@ -7,7 +7,7 @@
  */
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
-import { cpSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { cpSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -51,6 +51,66 @@ describe('amk drift', () => {
     assert.match(out, /warn /)
     assert.doesNotMatch(out, /error /)
     assert.equal(status, 0)
+  })
+})
+
+/** Every file outside .memory-out/, with its content: what a user would commit. */
+function snapshot(dir: string) {
+  return readdirSync(dir, { recursive: true, withFileTypes: true })
+    .filter((entry) => entry.isFile())
+    .map((entry) => join(entry.parentPath, entry.name))
+    .filter((path) => !path.includes('.memory-out'))
+    .sort()
+    .map((path) => `${path}\n${readFileSync(path, 'utf8')}`)
+}
+
+describe('every command runs in example/', () => {
+  // [args, expected exit]. drift and doctor exit 1 because example/ plants a
+  // drift error on purpose; every other command must succeed.
+  const runs: [string[], number][] = [
+    [['validate'], 0],
+    [['stats'], 0],
+    [['contract'], 0],
+    [['contract', '--json'], 0],
+    [['search', 'what does it cost'], 0],
+    [['compile'], 0],
+    [['import', '.memory-out/bundle.md', '--dry-run'], 0],
+    [['import', '.memory-out/compiled.json'], 0],
+    [['index'], 0],
+    [['eval'], 0],
+    [['drift'], 1],
+    [['expiring', '--within', '30'], 0],
+    [['gaps', 'add', 'sso setup'], 0],
+    [['gaps'], 0],
+    [['gaps', '--report'], 0],
+    [['gaps', 'sync', '.memory-out/GAPS.md'], 0],
+    [['doctor'], 1],
+  ]
+
+  it('each command exits with its documented status, in order', () => {
+    for (const [args, expected] of runs) {
+      const { status, out } = amk(args)
+      assert.equal(status, expected, `amk ${args.join(' ')}\n${out}`)
+    }
+  })
+
+  it('doctor still reaches the gap summary after drift reports an error', () => {
+    const { out } = amk(['doctor'])
+    assert.match(out, /gaps — \d+ open/)
+  })
+
+  it('the README quickstart writes nothing outside .memory-out/', () => {
+    const before = snapshot(workspace)
+    assert.ok(before.length >= 6, 'snapshot must see the example atoms')
+    for (const args of [['validate'], ['eval'], ['drift'], ['compile'], ['search', 'what does it cost']]) amk(args)
+    assert.deepEqual(snapshot(workspace), before)
+  })
+
+  it('init scaffolds a memory that validates', () => {
+    rmSync(workspace, { recursive: true, force: true })
+    mkdirSync(workspace)
+    assert.equal(amk(['init']).status, 0)
+    assert.equal(amk(['validate']).status, 0)
   })
 })
 
