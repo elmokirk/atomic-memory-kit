@@ -44,6 +44,16 @@ Zero-dependency stdio server. MCP over stdio is newline-delimited JSON-RPC 2.0,
 which is about eighty lines of plumbing; pulling in an SDK would undo the "copy
 the folder and it works" property.
 
+For Claude Code, the plugin starts this server for you, read-only by default.
+Setup, options and the `allow_writes` switch: [`docs/INTEGRATIONS.md` §1](../docs/INTEGRATIONS.md#1-claude-code-stdio).
+
+```text
+/plugin marketplace add elmokirk/atomic-memory-kit
+/plugin install amk@atomic-memory-kit
+```
+
+Manual registration, writes on unless you add `--allow-writes false`:
+
 ```bash
 # Claude Code
 claude mcp add memory -- node /abs/path/agent/mcp-server.mjs --config /abs/path/memory.config.json
@@ -63,24 +73,32 @@ claude mcp add memory -- node /abs/path/agent/mcp-server.mjs --config /abs/path/
 
 ### Tools
 
-| Tool | Purpose |
-|---|---|
-| `memory_search` | Retrieve with scores and a scope verdict |
-| `memory_get` | One atom by id, with graph neighbours |
-| `memory_scope` | Everything the memory covers — call first to check territory |
-| `memory_gap_add` | Record something the memory did not have |
-| `memory_gaps` | List gaps, highest recurrence first |
-| `memory_gap_close` | Close a gap once an atom covers it |
-| `memory_bundle` | Compile atoms + open gaps into one editable document |
-| `memory_reload` | Reload atoms from disk after edits |
+| Tool | Purpose | Writes |
+|---|---|---|
+| `memory_contract` | The machine-readable atom contract — read before authoring | |
+| `memory_scope` | Everything the memory covers — call first to check territory | |
+| `memory_search` | Retrieve with scores and a scope verdict | |
+| `memory_get` | One atom by id, with graph neighbours | |
+| `memory_compile` | Atoms + open gaps as one bundle, JSON, or digest | |
+| `memory_restructure` | Validate atom proposals and plan the change, writing nothing | |
+| `memory_apply` | Write a validated plan | yes |
+| `memory_gaps` | List gaps, highest recurrence first | |
+| `memory_gap_add` | Record something the memory did not have | yes |
+| `memory_gap_close` | Close a gap once an atom covers it | yes |
+| `memory_close_gaps` | Ask the user about open gaps and plan atoms from the answers | with `autoApply` |
+
+Tools marked as writing are refused when the server runs with
+`--allow-writes false` (the plugin default) and over HTTP without
+`AMK_AUTH_TOKEN`.
 
 The tool **descriptions carry the behavioural rules** — `memory_search` tells the
 model in-band what `no_match` means and what to do about it. Agents follow
 tool descriptions more reliably than distant system-prompt instructions, so the
 guidance is placed where it will actually be read.
 
-The memory is loaded once at startup. Call `memory_reload` after editing atoms,
-or restart the server.
+The memory is loaded on first use and cached. After editing atoms by hand,
+restart the server, or set `"watch": true` in `memory.config.json` to reload on
+every request.
 
 ---
 
@@ -93,7 +111,7 @@ subagent works ──► hits a wall ──► memory_gap_add
                                         │
         several agents, several sessions │
                                         ▼
-                              memory_bundle
+                              memory_compile
                                         │
                     one document: everything known
                     + everything missing, as checkboxes

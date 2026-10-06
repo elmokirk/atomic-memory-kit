@@ -7,7 +7,13 @@ node agent/mcp-server.mjs --config ./memory.config.json --http 8787 # streamable
 
 `--http` binds `127.0.0.1`; pass `--host <address>` to bind elsewhere. The
 startup log prints the address actually bound. Over HTTP, the writing tools are
-refused unless `AMK_AUTH_TOKEN` is set; read tools are not. stdio is unchanged.
+refused unless `AMK_AUTH_TOKEN` is set; read tools are not.
+
+`--allow-writes <value>` makes the server read-only on any transport unless the
+value is exactly `true`. Without the flag, stdio writes as before. The Claude
+Code plugin always passes it, `false` by default; see
+[`INTEGRATIONS.md` §1](INTEGRATIONS.md#1-claude-code-stdio). A missing config
+file is reported on every tool call as `no memory config at <path>` with the fix.
 
 ```bash
 claude mcp add memory -- node /abs/path/agent/mcp-server.mjs --config /abs/path/memory.config.json

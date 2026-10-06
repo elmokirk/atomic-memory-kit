@@ -330,6 +330,39 @@ gateway.
 
 ---
 
+## The Claude Code plugin
+
+**Read-only by default means gaps are not recorded by default.** With
+`allow_writes` off, `memory_gap_add` is refused like every other write, so a
+`no_match` is reported to the user but not counted in the ledger. Turn writes on
+for the gap loop to work; there is no "gaps only" setting.
+
+**It does not touch Claude Code memory.** No reading, importing or auditing of
+`CLAUDE.md` or auto memory. It serves the knowledge base named in
+`memory.config.json` and nothing else.
+
+**One memory per project.** The config path is resolved against the project
+root. A memory shared across projects needs a config in each project whose
+`root` and `gapLedger` are absolute.
+
+**`node` comes from your `PATH`.** The plugin cannot pin a Node version. On
+Node < 22.18 the server exits at start, and Claude Code shows it as failed in
+`/mcp`; the reason is only on the server's stderr.
+
+**Installing copies the whole repository.** The plugin root has to be the
+repository root, so the plugin cache holds tests, docs and the example too.
+After uninstall, Claude Code keeps that copy, marked orphaned, for 14 days, and
+longer if no other plugin is installed.
+
+**No skills, hooks or slash commands ship with it.** The behavioural rules live
+in the tool descriptions. `agent/AGENTS.snippet.md` and the two skills still have
+to be copied by hand if you want them.
+
+**Unversioned.** `plugin.json` sets no `version`, so a GitHub install follows
+the default branch and `claude plugin validate` warns about it.
+
+---
+
 ## The memory-tool bridge
 
 **Every file under the root must be an atom.** There is no room for a free-form

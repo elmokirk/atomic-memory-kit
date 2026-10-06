@@ -5,7 +5,7 @@ preference — the choice is mostly made for you.
 
 | Surface | Transport | Network | Auth | Guide |
 |---|---|---|---|---|
-| **Claude Code** | MCP over stdio | none | none needed | [§1](#1-claude-code-stdio) |
+| **Claude Code** | plugin, MCP over stdio | none | none needed | [§1](#1-claude-code-stdio) |
 | **Claude Cowork / claude.ai / Desktop** | MCP over HTTPS | **public** | required | [§2](#2-cowork-claudeai-and-desktop-connector) |
 | **Anthropic API agents** | memory tool handler | none | yours | [§3](#3-the-memory-tool-handler) |
 | **Your own code** | library import | none | none | [§4](#4-library) |
@@ -24,14 +24,68 @@ The one constraint that decides most of this:
 
 ## 1. Claude Code (stdio)
 
-No network, no tunnel, no token. One line:
+No network, no tunnel, no token.
+
+The plugin connects Claude Code to a curated knowledge base with gap tracking.
+It sits next to Claude Code's own memory (`CLAUDE.md`, auto memory) and does not
+replace or read it.
+
+### 1.1 Plugin (recommended)
+
+Two commands in a Claude Code session:
+
+```text
+/plugin marketplace add elmokirk/atomic-memory-kit
+/plugin install amk@atomic-memory-kit
+```
+
+From a shell, the same is `claude plugin marketplace add elmokirk/atomic-memory-kit`
+and `claude plugin install amk@atomic-memory-kit`. Restart the session; the
+server appears in `/mcp` and `claude mcp list` as `plugin:amk:memory`, and its
+tools are named `mcp__plugin_amk_memory__memory_search` and so on.
+
+Requirements and defaults:
+
+| Item | Value |
+|---|---|
+| Node | >= 22.18 on `PATH`. The plugin runs `node` from your environment; the server exits with a message on older versions |
+| Memory | `memory.config.json` in the project root. Without it, every tool call answers with `no memory config at <path>` and what to do. Copy `example/memory.config.json` as a start |
+| Writes | **Off.** `memory_apply`, `memory_gap_add`, `memory_gap_close` and `memory_close_gaps` with `autoApply` are refused by the server |
+
+Two plugin options, set in `/plugin` or `/config`, or from a shell:
+
+| Option | Default | Effect |
+|---|---|---|
+| `config` | `memory.config.json` | Path to the config, relative to the project root. To use a memory outside the project, keep a config in the project and make its `root` and `gapLedger` absolute |
+| `allow_writes` | `false` | `true` lets the write tools above change atoms and the gap ledger |
+
+```bash
+echo '{"allow_writes":"true"}' | claude plugin configure amk@atomic-memory-kit --values-stdin
+```
+
+Restart Claude Code after changing an option. With writes off, the agent can
+still search and report a `no_match`, but cannot record the gap; that is the
+price of the safe default.
+
+Uninstall with `/plugin uninstall amk@atomic-memory-kit`. It removes the
+plugin's install record, options and data directory; your memory files, gap
+ledger, auto memory and other plugins are not touched.
+
+The plugin's root is this repository's root, because the server imports `src/`
+and `adapters/`, and a plugin cannot reference files above its own root.
+Installing therefore copies the whole repository into Claude Code's plugin cache.
+
+### 1.2 Manual (fallback)
+
+For a checkout you manage yourself, or a client without plugin support:
 
 ```bash
 claude mcp add memory -- node /abs/path/agent/mcp-server.mjs --config /abs/path/memory.config.json
 ```
 
-Use absolute paths — the server is launched from an unspecified working
-directory. Verify with `/mcp` in a session, or:
+This route keeps writes on, as before the plugin. Add `--allow-writes false` to
+make it read-only. Use absolute paths — the server is launched from an
+unspecified working directory. Verify with `/mcp` in a session, or:
 
 ```bash
 echo '{"jsonrpc":"2.0","id":1,"method":"server/discover","params":{}}' \

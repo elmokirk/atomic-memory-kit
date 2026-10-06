@@ -145,7 +145,28 @@ integration-tested yet.
 | OpenViking is a context database exposing `viking://` URIs, L0/L1/L2 tiers, an HTTP API on port 1933 and SDKs; core licensed AGPLv3 | docs | [OpenViking repository](https://github.com/volcengine/OpenViking) · [Sessions API](https://docs.openviking.ai/en/api/05-sessions) | ROADMAP, deferred |
 | OpenViking memories live under the user namespace (`viking://user/{id}/...`); older docs showed `viking://agent/memories`, the FAQ says that path is no longer writable | docs | [Context types](https://docs.openviking.ai/en/concepts/02-context-types) · [FAQ](https://docs.openviking.net/en/faq/faq) | ROADMAP, deferred (reason: API still moving) |
 
-## 8. Adding a row
+## 8. Claude Code plugin system
+
+*Retrieved 2026-10-06*, against Claude Code 2.1.289. Basis of
+[`.claude-plugin/`](.claude-plugin/) and [`docs/INTEGRATIONS.md`](docs/INTEGRATIONS.md) §1.
+
+| Claim | Grade | Source | Used in |
+|---|---|---|---|
+| `marketplace.json` lives at `<root>/.claude-plugin/`; `name`, `owner`, `plugins` required; relative plugin sources resolve from the marketplace root, `"./"` style paths, `..` rejected | docs | [Marketplace reference](https://code.claude.com/docs/en/plugins/marketplace-reference) | `.claude-plugin/marketplace.json` |
+| Reserved marketplace names (official, community, `inline`, `builtin`, `npm`, `github`, `claudeai-*` and others); `atomic-memory-kit` is none of them | docs | same, § Reserved names | marketplace name |
+| Plugin names starting with `claude-`/`anthropic-` are errors; `claude` as a whole word is a warning | docs | [Manifest reference](https://code.claude.com/docs/en/plugins/manifest-reference) § name | plugin name `amk` |
+| A plugin from a GitHub or git marketplace is copied into `cache/<marketplace>/<plugin>/<version>/`; files above the plugin root are not copied, and component paths may not escape the root | docs | [Plugin loading](https://code.claude.com/docs/en/plugins/loading) § In-place and copied plugins | why the plugin root is the repository root |
+| A relative-path plugin in a marketplace added from a local path loads in place, and `CLAUDE_PLUGIN_ROOT` points at the source directory | docs | same | install test from the local worktree |
+| `mcpServers` may be inline in `plugin.json`; stdio `command`, `args`, `env` substitute `${CLAUDE_PLUGIN_ROOT}`, `${CLAUDE_PLUGIN_DATA}`, `${CLAUDE_PROJECT_DIR}` and `${user_config.KEY}` | docs | [Manifest reference](https://code.claude.com/docs/en/plugins/manifest-reference) · [MCP](https://code.claude.com/docs/en/mcp) § Plugin-provided MCP servers | `plugin.json` `args` |
+| Plugin MCP tools are named `mcp__plugin_<plugin>_<server>__<tool>` | docs | [MCP](https://code.claude.com/docs/en/mcp) § Plugin-provided MCP servers | `docs/INTEGRATIONS.md` §1.1 |
+| `userConfig` options are strict objects (`type`, `title`, `description` required; `default` optional); non-sensitive values are stored under `pluginConfigs` in `settings.json` | docs | [Manifest reference](https://code.claude.com/docs/en/plugins/manifest-reference) § User configuration | `config`, `allow_writes` options |
+| `claude plugin configure <id> --values-stdin` saves option values non-interactively and asks for a restart | docs | [Plugin commands](https://code.claude.com/docs/en/plugins/cli-reference) § plugin configure | `docs/INTEGRATIONS.md` §1.1 |
+| Uninstalling from the last scope deletes stored options and the data directory; the previous version directory gets an `.orphaned_at` marker and is removed 14 days later, and only while some plugin is still installed | docs | [Plugin commands](https://code.claude.com/docs/en/plugins/cli-reference) § What an uninstall deletes · [Plugin loading](https://code.claude.com/docs/en/plugins/loading) | `docs/INTEGRATIONS.md` §1.1, `LIMITATIONS.md` |
+| `CLAUDE_CONFIG_DIR` relocates settings and plugins; `CLAUDE_CODE_PLUGIN_CACHE_DIR` relocates the plugins root | docs | [Environment variables](https://code.claude.com/docs/en/env-vars) | isolated install test |
+| An unset boolean option with `default: false` is substituted as the string `false`; after `configure`, `true`. The plugin's server showed `✔ Connected` in `claude mcp list` | observation | isolated profile, Claude Code 2.1.289, 2026-10-06 | `--allow-writes` accepts only `true` |
+| A `CLAUDE.md` at the plugin root is not loaded and draws a `claude plugin validate` warning | docs | [Manifest reference](https://code.claude.com/docs/en/plugins/manifest-reference) § Standard layout | known validate warning |
+
+## 9. Adding a row
 
 When you state a fact about someone else's system:
 
