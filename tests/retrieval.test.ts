@@ -11,7 +11,7 @@ import { describe, it } from 'node:test'
 import { defineMemoryConfig } from '../src/config.ts'
 import { loadMemory } from '../src/loader.ts'
 import { normalize, stem, tokenize } from '../src/score.ts'
-import { searchMemory } from '../src/search.ts'
+import { buildQuery, searchMemory } from '../src/search.ts'
 import { validateAtom } from '../src/schema.ts'
 import { MemoryContractError } from '../src/types.ts'
 import type { MemoryFileRaw } from '../src/types.ts'
@@ -220,5 +220,20 @@ describe('budget discipline', () => {
     const capped = defineMemoryConfig({ ...config, maxChunks: 1, edgeMaxChunks: 0 })
     const { base: cappedBase } = loadMemory(FILES, capped)
     assert.equal(searchMemory(cappedBase, 'price limits').chunks.length, 1)
+  })
+})
+
+describe('history window', () => {
+  const history = [{ role: 'user' as const, content: 'what does the starter plan cost' }]
+
+  it('historyContextMessages 0 uses no history at all', () => {
+    const none = defineMemoryConfig({ ...config, historyContextMessages: 0 })
+    const { base: noneBase } = loadMemory(FILES, none)
+    assert.equal(buildQuery('and the weather', noneBase, { history }), 'and the weather')
+    assert.equal(searchMemory(noneBase, 'and the weather', { history }).scopeStatus, 'no_match')
+  })
+
+  it('a positive window still pulls the trailing user turns into the query', () => {
+    assert.equal(searchMemory(base, 'and the weather', { history }).scopeStatus, 'match')
   })
 })
