@@ -1,0 +1,15 @@
+{
+  "name": "atomic-memory-kit",
+  "description": "Atomic Memory Kit: a curated knowledge base with gap tracking for coding agents.",
+  "owner": {
+    "name": "Kirk Kleinau",
+    "url": "https://github.com/elmokirk"
+  },
+  "plugins": [
+    {
+      "name": "amk",
+      "source": "./",
+      "category": "knowledge"
+    }
+  ]
+}
