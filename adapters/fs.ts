@@ -113,16 +113,30 @@ export function writeMemoryFiles(root: string, files: MemoryFileRaw[]): WriteRes
  * Gap ledger persistence (JSONL: append-friendly, diff-friendly, greppable)
  * ------------------------------------------------------------------ */
 
-export function readGapLedger(file: string): GapRecord[] {
+/**
+ * Read the ledger, keeping every valid line.
+ *
+ * A corrupt line must never take down the whole ledger, but skipping it
+ * silently loses evidence nobody knows is gone. So each one is reported with
+ * its 1-based line number: to `onCorrupt` if given, else as a process warning
+ * (stderr, which leaves an MCP stdio stream intact).
+ */
+export function readGapLedger(
+  file: string,
+  onCorrupt: (line: number, text: string) => void = (line) => process.emitWarning(
+    `${file}:${line}: corrupt gap ledger line skipped; it is dropped on the next ledger write`,
+    { code: 'AMK_CORRUPT_LEDGER_LINE' },
+  ),
+): GapRecord[] {
   if (!existsSync(file)) return []
   const records: GapRecord[] = []
-  for (const line of readFileSync(file, 'utf8').split('\n')) {
+  for (const [index, line] of readFileSync(file, 'utf8').split('\n').entries()) {
     const trimmed = line.trim()
     if (trimmed === '') continue
     try {
       records.push(JSON.parse(trimmed) as GapRecord)
     } catch {
-      // A corrupt line must never take down the whole ledger.
+      onCorrupt(index + 1, trimmed)
     }
   }
   return records
