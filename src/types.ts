@@ -83,6 +83,13 @@ export interface MemorySearchResult {
   chunks: RetrievedChunk[]
   scopeStatus: ScopeStatus
   bestScore: number
+  /**
+   * True when the chunks together exceed the char budget. Only possible when
+   * the top hit alone is larger than the budget: it is returned whole and alone
+   * rather than cut, because a truncated atom can drop the very fact that was
+   * asked for. The budget covers chunks only, never alwaysInclude atoms.
+   */
+  overBudget: boolean
 }
 
 /** Precomputed tokenize() output per atom field (see loader.buildTokenCache). */
