@@ -1,65 +1,94 @@
 # Atomic Memory Kit
 
-**Bidirectional atomic memory for agents.** Store knowledge as small Markdown
-atoms, compile the whole thing into one editable document, hand it to a human or
-an agent, get it back, fan it out into atoms again — and along the way, record
-everything the memory *did not* know.
+AMK is a retrieval engine for chatbots that answer from a small, curated
+knowledge base: no embeddings, no vector database, and a record of every
+question the knowledge base could not answer.
 
-Zero dependencies. No build step. No embeddings. No network.
+| Problem in a typical RAG chatbot | What AMK does |
+|---|---|
+| The bot answers confidently when nothing relevant was retrieved | `no_match` before any model is called |
+| Nobody sees which questions go unanswered | A gap ledger: deduplicated, counted, reopened when a fix did not work |
+| A price changes on the website, the bot keeps quoting the old one | A drift check of external numbers against the atoms that back them |
+| Retrieval cannot be explained or regression-tested | A score per atom; eval cases with must-retrieve and must-not-retrieve |
+| Embedding pipeline, vector store, per-query cost | None. Markdown files, zero runtime dependencies |
 
-```
-atoms/ ──compile──► one bundle (+ open gaps) ──► human edits ──► import ──► atoms/
-   ▲                                                                          │
-   └────────────────────── validate: contract + graph ─────────────────────────┘
-```
-
-- **What it is for** — [`PRODUCT.md`](PRODUCT.md). Chatbots on curated knowledge, and an add-on for existing memory systems. Start here.
-- **The concept** — [`CONCEPT.md`](CONCEPT.md). Portable, implementation-independent.
-- **The limits** — [`LIMITATIONS.md`](LIMITATIONS.md). Read before adopting.
-- **The rules** — [`CONTRACT.md`](CONTRACT.md). Contract `1.1.0`: dependencies, core rules, conformance levels.
-- **The server** — [`docs/MCP.md`](docs/MCP.md). Stateless MCP, revision `2026-07-28`.
-- **Anthropic's memory tool** — [`docs/MEMORY-TOOL.md`](docs/MEMORY-TOOL.md). Back `/memories` with the contract.
-- **Wiring it up** — [`docs/INTEGRATIONS.md`](docs/INTEGRATIONS.md). Claude Code, Cowork, the memory tool, library.
-- **Where it could go** — [`IDEAS.md`](IDEAS.md). Scopes, escalation, self-observation — captured and scored.
-- **What ships next** — [`docs/plans/`](docs/plans/). One plan per release, each with kill criteria.
-- **The verdict** — [`VERDICT.md`](VERDICT.md). Two-minute comparison against Anthropic's stack, and where this belongs.
-- **The comparison** — [`ANALYSIS-ANTHROPIC-MEMORY.md`](ANALYSIS-ANTHROPIC-MEMORY.md). The long form, red-teamed, with sources.
-- **The provenance** — [`SOURCEMAP.md`](SOURCEMAP.md). Where the code came from and what depends on what.
-- **The sources** — [`LINKMAP.md`](LINKMAP.md). Every external claim, with retrieval date and reliability grade.
+It is a component you call before your model, not a chatbot product and not a
+memory store for conversations. What it is for and what it is not:
+[`PRODUCT.md`](PRODUCT.md).
 
 ---
 
-## The loop, in one call
+## Try it in one minute
 
-The 2026-07-28 MCP revision introduced Multi Round-Trip Requests, which happen to
-be exactly this system's core workflow:
-
-```
-gap found ──► agent asks the human ──► human answers ──► restructured into atoms
-```
-
-`memory_close_gaps` returns `resultType: "input_required"` with one elicitation
-per open gap. The client collects answers and retries the same call with
-`inputResponses`; the server turns them into contract-checked atom proposals and
-returns a diff. No session, no sticky routing — the retry may land on a different
-process.
+Requires Node 22.18 or newer. No install, no API key, no network.
 
 ```bash
-node agent/mcp-server.mjs --config ./memory.config.json            # stdio
-node agent/mcp-server.mjs --config ./memory.config.json --http 8787 # streamable HTTP, 127.0.0.1 only
+git clone https://github.com/elmokirk/atomic-memory-kit.git
+cd atomic-memory-kit
+node example/chatbot/demo.mjs      # or: npm run demo
 ```
+
+It loads the example memory, answers one question with a scripted model and
+refuses another before any model call. Real output from a run (the
+temp path differs per run and OS):
+
+```
+== Question 1 (in scope)
+> How many seats do I get on Starter, and is SSO included?
+
+scope: match, best score 4.5
+atoms in the prompt:
+  always  index.scope
+     4.5  product.limits
+     1.8  pricing.plans (via edge)
+prompt: 1578 chars
+
+answer shown to the user:
+Starter includes 5 seats [[source:product.limits]]. Whether SSO is part of Starter is not in my memory, so I will not guess. I have passed the question on.
+
+== Question 2 (out of scope)
+> Give me a recipe for strawberry jam
+
+scope: no_match, best score 0.1
+model not called; the bot declines and the question is recorded
+
+== Gap ledger
+/tmp/amk-demo-XXXXXX/gaps.jsonl
+  runtime  sso on the starter plan  (seen 1x)
+  scope    give me a recipe for strawberry jam  (seen 1x)
+
+model calls: 1
+```
+
+The model wrote `[GAP: SSO on the Starter plan]`, split across three stream
+chunks. The user never sees it; the ledger records it. The ledger goes to a temp
+directory, so the repository stays unchanged.
+
+To use your own model, replace `callModel` in
+[`example/chatbot/demo.mjs`](example/chatbot/demo.mjs): it receives the system
+prompt and the question and yields text deltas. The repository ships no API
+client. Wiring a real model properly: [`docs/INTEGRATION-LLM.md`](docs/INTEGRATION-LLM.md).
+
+---
+
+## Install
+
+Node **22.18 or newer**, for native TypeScript type stripping; that is why there
+is no build step. Zero dependencies, so there is nothing to `npm install`.
+
+```bash
+npm link                 # optional: puts `amk` on your PATH
+npm test                 # 275 tests
+```
+
+There is no npm package yet: use a clone, or copy `src/` and `adapters/` into
+your project ([`docs/PORTING.md`](docs/PORTING.md)).
 
 ---
 
 ## Quickstart
 
-Requires **Node ≥ 22.18** (native TypeScript type stripping — that is why there is
-no build step).
-
 ```bash
-git clone <this-repo> && cd atomic-memory-kit
-npm link                 # optional: puts `amk` on your PATH
-
 cd example
 node ../cli/amk.mjs validate    # 6 atoms, contract clean, graph intact
 node ../cli/amk.mjs eval        # scope accuracy, hit rate, precision
@@ -68,6 +97,8 @@ node ../cli/amk.mjs compile     # writes bundle.md + compiled.json + digest.md
 node ../cli/amk.mjs search "what does it cost"
 ```
 
+Or all checks at once from the repository root: `npm run check`.
+
 In your own project:
 
 ```bash
@@ -75,6 +106,30 @@ mkdir my-memory && cd my-memory
 amk init                 # scaffolds memory/ + memory.config.json + eval cases
 amk validate
 ```
+
+---
+
+## Limits
+
+Read [`LIMITATIONS.md`](LIMITATIONS.md) before adopting. The short form:
+retrieval is keyword-based, so a question phrased in vocabulary that appears in
+no atom finds nothing;
+past roughly 500 atoms it needs an index; runtime gaps appear only if your model
+follows the marker instruction; the ledger is a file, not safe for concurrent
+writers.
+
+## Read next
+
+1. [`PRODUCT.md`](PRODUCT.md): what it is for, who it is for, what is out of scope.
+2. [`docs/INTEGRATION-LLM.md`](docs/INTEGRATION-LLM.md): putting it in front of a real model.
+3. [`LIMITATIONS.md`](LIMITATIONS.md): every way it is wrong or weak.
+
+Deeper: [`CONCEPT.md`](CONCEPT.md) (the portable idea),
+[`CONTRACT.md`](CONTRACT.md) (atom rules, contract `1.1.0`),
+[`docs/MCP.md`](docs/MCP.md) (MCP server), [`docs/MEMORY-TOOL.md`](docs/MEMORY-TOOL.md)
+(Anthropic memory-tool backend), [`docs/INTEGRATIONS.md`](docs/INTEGRATIONS.md),
+[`SOURCEMAP.md`](SOURCEMAP.md) (provenance and verification),
+[`LINKMAP.md`](LINKMAP.md) (sources for every external claim).
 
 ---
 
@@ -175,6 +230,28 @@ token streaming, and it is covered by tests.
 
 ---
 
+## The loop, in one call
+
+The 2026-07-28 MCP revision introduced Multi Round-Trip Requests, which happen to
+be exactly this system's core workflow:
+
+```
+gap found ──► agent asks the human ──► human answers ──► restructured into atoms
+```
+
+`memory_close_gaps` returns `resultType: "input_required"` with one elicitation
+per open gap. The client collects answers and retries the same call with
+`inputResponses`; the server turns them into contract-checked atom proposals and
+returns a diff. No session, no sticky routing — the retry may land on a different
+process.
+
+```bash
+node agent/mcp-server.mjs --config ./memory.config.json            # stdio
+node agent/mcp-server.mjs --config ./memory.config.json --http 8787 # streamable HTTP, 127.0.0.1 only
+```
+
+---
+
 ## Layout
 
 ```
@@ -199,7 +276,8 @@ cli/                thin shell over src/
 agent/              skills, MCP server (2026-07-28), AGENTS.md snippet
 docs/               deep dives + porting guide + MCP reference
 example/            working memory with planted gaps
-tests/              270 tests, node:test, zero deps
+  chatbot/demo.mjs    the one-minute demo: retrieval, scope gate, streamed gap
+tests/              275 tests, node:test, zero deps
 ```
 
 ---
