@@ -52,10 +52,10 @@ Subsections to use: `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `Secur
 
 - Claude Code plugin `amk` in marketplace `atomic-memory-kit`
   (`.claude-plugin/`): starts `agent/mcp-server.mjs` over stdio, read-only by
-  default, memory config resolved from the project root. Options `config` and
+  default (gaps are still recorded), memory config resolved from the project root. Options `config` and
   `allow_writes`. See `docs/INTEGRATIONS.md` §1.
-- MCP server `--allow-writes <value>`: refuses every writing tool unless the
-  value is exactly `true`. Without the flag, behaviour is unchanged.
+- MCP server `--allow-writes <value>`: refuses writing tools unless the value
+  is exactly `true`; `memory_gap_add` stays allowed so misses are still counted. Without the flag, behaviour is unchanged.
 - A missing memory config now answers `no memory config at <path>` with the fix,
   instead of a raw `ENOENT`.
 - `example/chatbot/demo.mjs` (`npm run demo`): a runnable chatbot path over the

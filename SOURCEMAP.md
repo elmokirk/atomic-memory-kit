@@ -9,7 +9,7 @@ worse than none, because it is believed.
 
 - **Code total:** ~11 700 lines tracked, of which ~3 300 are `src/`
 - **Dependencies:** zero, runtime and dev
-- **Tests:** 275 (1 skipped on Windows without symlink rights), `node:test`
+- **Tests:** 285 (1 skipped on Windows without symlink rights), `node:test`
 
 ---
 
@@ -56,7 +56,7 @@ Two vocabulary changes were made during extraction, to remove chatbot framing:
 | `CONCEPT.md` | The idea lived in Kirk's head and in the shape of the code, nowhere in writing. |
 | `LIMITATIONS.md` | — |
 | `ANALYSIS-ANTHROPIC-MEMORY.md` | — |
-| `tests/` | The source had two lifecycle-gated test files; these 275 are new or rewritten. |
+| `tests/` | The source had two lifecycle-gated test files; these 285 are new or rewritten. |
 
 ### 1.3 Defects found *during* extraction
 
@@ -173,7 +173,7 @@ Reproduce any of these from a clean checkout.
 
 | Claim made in the docs | How to check it |
 |---|---|
-| 275 tests, zero dependencies | `npm test` |
+| 285 tests, zero dependencies | `npm test` |
 | Contract, prose and validator agree | `node --test tests/contract.test.ts` |
 | Round-trip is lossless | `node --test tests/round-trip.test.ts` |
 | MRTR works across cold processes | `node --test tests/mcp.test.ts` |
@@ -185,7 +185,7 @@ Reproduce any of these from a clean checkout.
 | The HTTP transport speaks the revision | `npm run mcp:http`, then POST `server/discover` |
 | The contract is machine-readable | `npm run contract` |
 
-Last full run, 2026-10-06 on Node 24 / Windows: **274 pass, 1 skipped, 0 fail.** Example
+Last full run, 2026-10-06 on Node 24 / Windows: **284 pass, 1 skipped, 0 fail.** Example
 `doctor`: contract clean, graph intact, scope accuracy 1.0, hit rate 1.0,
 precision 0.75, 1 drift finding, 3 open gaps — all planted on purpose.
 

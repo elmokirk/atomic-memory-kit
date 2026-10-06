@@ -78,7 +78,7 @@ is no build step. Zero dependencies, so there is nothing to `npm install`.
 
 ```bash
 npm link                 # optional: puts `amk` on your PATH
-npm test                 # 275 tests
+npm test                 # 285 tests
 ```
 
 There is no npm package yet: use a clone, or copy `src/` and `adapters/` into
@@ -277,7 +277,7 @@ agent/              skills, MCP server (2026-07-28), AGENTS.md snippet
 docs/               deep dives + porting guide + MCP reference
 example/            working memory with planted gaps
   chatbot/demo.mjs    the one-minute demo: retrieval, scope gate, streamed gap
-tests/              275 tests, node:test, zero deps
+tests/              285 tests, node:test, zero deps
 ```
 
 ---

@@ -32,7 +32,7 @@
     "allow_writes": {
       "type": "boolean",
       "title": "Allow writes",
-      "description": "Off: the server refuses memory_apply, memory_gap_add, memory_gap_close, and memory_close_gaps with autoApply. On: those tools write atoms and the gap ledger.",
+      "description": "Off: the server refuses memory_apply, memory_gap_close, and memory_close_gaps with autoApply; memory_gap_add still records gaps in the ledger. On: atoms can be written and gaps closed.",
       "default": false
     }
   }

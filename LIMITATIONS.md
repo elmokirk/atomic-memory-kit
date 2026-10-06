@@ -332,10 +332,11 @@ gateway.
 
 ## The Claude Code plugin
 
-**Read-only by default means gaps are not recorded by default.** With
-`allow_writes` off, `memory_gap_add` is refused like every other write, so a
-`no_match` is reported to the user but not counted in the ledger. Turn writes on
-for the gap loop to work; there is no "gaps only" setting.
+**Read-only by default still records gaps.** With `allow_writes` off, atoms
+cannot be written and gaps cannot be closed, but `memory_gap_add` appends to the
+gap ledger, because counting what the knowledge base could not answer is the
+point of the tool. The ledger file therefore grows in the project even in
+read-only mode. Over HTTP without a token, `memory_gap_add` is still refused.
 
 **It does not touch Claude Code memory.** No reading, importing or auditing of
 `CLAUDE.md` or auto memory. It serves the knowledge base named in

@@ -50,7 +50,7 @@ Requirements and defaults:
 |---|---|
 | Node | >= 22.18 on `PATH`. The plugin runs `node` from your environment; the server exits with a message on older versions |
 | Memory | `memory.config.json` in the project root. Without it, every tool call answers with `no memory config at <path>` and what to do. Copy `example/memory.config.json` as a start |
-| Writes | **Off.** `memory_apply`, `memory_gap_add`, `memory_gap_close` and `memory_close_gaps` with `autoApply` are refused by the server |
+| Writes | **Off.** `memory_apply`, `memory_gap_close` and `memory_close_gaps` with `autoApply` are refused by the server. `memory_gap_add` still records gaps in the ledger |
 
 Two plugin options, set in `/plugin` or `/config`, or from a shell:
 

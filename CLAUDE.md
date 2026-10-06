@@ -53,7 +53,7 @@ Full module graph and layering rules: [`SOURCEMAP.md`](SOURCEMAP.md) §2.
 ## Commands
 
 ```bash
-npm test                  # 275 tests
+npm test                  # 285 tests
 npm run demo              # the chatbot demo
 npm run check             # validate + eval on example/, then the tests
 npm run contract          # print the contract

@@ -7,7 +7,7 @@ Outcome: the PoC core reaches users through a Mem0 adapter and a Claude Code plu
 | Increment | Status | Branch | Evidence |
 |---|---|---|---|
 | I6 Mem0 integration | planned | `mvp/i6-mem0` | – |
-| I7 Claude Code integration | planned | `mvp/i7-plugin` | – |
+| I7 Claude Code integration | awaiting_user | `mvp/i7-plugin` | `a2c44f0` manifests, `92a95e4` server + tests, `d1f987d` docs; validate passes (3 warnings); isolated install on Claude Code 2.1.289 connected, read-only enforced; GitHub-shorthand install and interactive `/plugin` screens open |
 | I8 Release | planned | `mvp/i8-release` | – |
 
 The Definition of Done for every increment in [POC.md](POC.md) applies here too.

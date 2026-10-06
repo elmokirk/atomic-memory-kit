@@ -555,6 +555,9 @@ const TOOLS = [
       additionalProperties: false,
     },
     mutates: () => true,
+    // Recording a miss is the product, and it only appends an observation to
+    // the ledger; read-only mode keeps it. Atoms and closing gaps stay gated.
+    observationOnly: true,
     run: ({ topic, kind = 'runtime', detail }) => {
       const ledger = getLedger()
       const record = ledger.observe({ kind, topic, detail, source: 'mcp' })
@@ -840,7 +843,7 @@ function dispatch(method, params, transport) {
           + 'Set AMK_AUTH_TOKEN on the server and send it as a Bearer token, or use stdio.',
       )
     }
-    if (READ_ONLY && tool.mutates?.(params.arguments ?? {})) {
+    if (READ_ONLY && !tool.observationOnly && tool.mutates?.(params.arguments ?? {})) {
       throw new RpcError(
         ERROR.INVALID_PARAMS,
         `${tool.name} writes to the memory and this server is read-only. Enable the Claude Code plugin `

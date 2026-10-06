@@ -10,7 +10,8 @@ startup log prints the address actually bound. Over HTTP, the writing tools are
 refused unless `AMK_AUTH_TOKEN` is set; read tools are not.
 
 `--allow-writes <value>` makes the server read-only on any transport unless the
-value is exactly `true`. Without the flag, stdio writes as before. The Claude
+value is exactly `true`. Read-only still lets `memory_gap_add` append to the gap
+ledger; atoms and closing gaps are refused. Without the flag, stdio writes as before. The Claude
 Code plugin always passes it, `false` by default; see
 [`INTEGRATIONS.md` §1](INTEGRATIONS.md#1-claude-code-stdio). A missing config
 file is reported on every tool call as `no memory config at <path>` with the fix.

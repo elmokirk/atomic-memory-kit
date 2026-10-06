@@ -96,12 +96,17 @@ describe('plugin server: read-only by default', () => {
     assert.match(JSON.stringify(reply.result), /pricing\.plans/)
   })
 
-  it('refuses memory_gap_add with the default options and writes no ledger', async () => {
+  it('records a gap with the default options: the ledger is the point, atoms stay untouched', async () => {
     rmSync(join(project, '.memory-out'), { recursive: true, force: true })
     const reply = await callTool('memory_gap_add', { topic: 'SSO pricing' }, defaults())
+    assert.equal(reply.error, undefined)
+    assert.ok(existsSync(ledger()))
+  })
+
+  it('refuses memory_gap_close with the default options', async () => {
+    const reply = await callTool('memory_gap_close', { id: 'runtime:sso pricing' }, defaults())
     assert.match(reply.error?.message ?? '', /read-only/)
     assert.match(reply.error?.message ?? '', /allow_writes/)
-    assert.equal(existsSync(ledger()), false)
   })
 
   it('refuses memory_apply with the default options', async () => {
@@ -111,7 +116,7 @@ describe('plugin server: read-only by default', () => {
 
   it('refuses writes when allow_writes was never substituted (fails closed)', async () => {
     const { allow_writes: _, ...rest } = defaults()
-    const reply = await callTool('memory_gap_add', { topic: 'SSO pricing' }, rest)
+    const reply = await callTool('memory_apply', { atoms: [] }, rest)
     assert.match(reply.error?.message ?? '', /read-only/)
   })
 
