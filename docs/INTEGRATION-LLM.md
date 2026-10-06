@@ -4,6 +4,11 @@
 produces a scored context and a scope verdict; what you do with those is your
 business.
 
+**Reference implementation:** [`example/chatbot/demo.mjs`](../example/chatbot/demo.mjs)
+wires everything below end to end (scope gate, prompt, streamed gap detection,
+ledger) around a scripted model. Run it with `npm run demo`; replace its
+`callModel` function to plug in your own model. It contains no API client.
+
 This document exists because the gap protocol only works if the consumer
 cooperates, and there are a handful of ways to wire it up that quietly do not
 work. Those are worth writing down.

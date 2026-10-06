@@ -50,6 +50,11 @@ Subsections to use: `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `Secur
 
 ### Added
 
+- `example/chatbot/demo.mjs` (`npm run demo`): a runnable chatbot path over the
+  example memory with a scripted model. Shows retrieval with scores, `no_match`
+  before any model call, a streamed `[GAP: …]` marker hidden from the user and
+  recorded, and the resulting ledger. No API key, no network; writes only to a
+  temp directory.
 - `GapDetector.write(delta)` and `end()`, returning visible text and completed
   topics. Replace `push(delta)` plus `stripGapMarkers(delta)` with them; `push`
   still works for topics only.

@@ -124,6 +124,12 @@ indistinguishable from having no gaps. Smaller models comply less reliably.
 > catches the "nothing at all" case regardless. Treat runtime gaps as a bonus
 > signal, not a guarantee.
 
+**The chatbot demo proves the plumbing, not the model.** Its model is a script
+that always emits a marker and always cites correctly. It shows that a marker
+is stripped and recorded and that `no_match` stops the call; it says nothing
+about whether a real model emits markers or declines when told to. That needs
+the behaviour suite in `docs/INTEGRATION-LLM.md`.
+
 **The streaming detector holds back possible markers.** After `[GAP:` it
 withholds text until the marker closes or more than 80 characters of topic have
 passed. A model that writes `[GAP:` and then stalls delays that text until

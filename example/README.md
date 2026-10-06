@@ -12,6 +12,7 @@ memory/
   process/support.md       the atom the bad claim points at
   product/limits.md
   product/onboarding.md    carries a TODO marker
+chatbot/demo.mjs           scripted chatbot over this memory: `npm run demo` from the root
 ```
 
 ## Planted findings
