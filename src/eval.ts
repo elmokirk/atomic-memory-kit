@@ -130,11 +130,15 @@ export function evalToGaps(summary: EvalSummary, source = 'amk eval'): GapObserv
   ]
 }
 
+/** Absolute failures: each one fails a run on its own, with or without a baseline. */
 export function checkThresholds(summary: EvalSummary, thresholds: EvalThresholds = defaultThresholds): string[] {
   const violations: string[] = []
   if (summary.scopeAccuracy < thresholds.scopeAccuracy) violations.push(`scopeAccuracy ${summary.scopeAccuracy} < ${thresholds.scopeAccuracy}`)
   if (summary.hitRate < thresholds.hitRate) violations.push(`hitRate ${summary.hitRate} < ${thresholds.hitRate}`)
   if (summary.precision < thresholds.precision) violations.push(`precision ${summary.precision} < ${thresholds.precision}`)
+  // A mustNotRetrieve hit is a per-case assertion, not a statistic: one leak
+  // fails the run whatever the averages say, and no baseline can absorb it.
+  for (const pair of summary.confusionPairs) violations.push(`forbidden retrieval: ${pair}`)
   return violations
 }
 

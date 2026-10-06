@@ -7,7 +7,12 @@
  * fixtures built to push it out of that range.
  */
 import assert from 'node:assert/strict'
-import { describe, it } from 'node:test'
+import { spawnSync } from 'node:child_process'
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { afterEach, beforeEach, describe, it } from 'node:test'
 
 import { defineMemoryConfig } from '../src/config.ts'
 import { checkThresholds, runEval } from '../src/eval.ts'
@@ -15,6 +20,8 @@ import type { EvalCase, EvalSummary } from '../src/eval.ts'
 import { loadMemory } from '../src/loader.ts'
 import { searchMemory } from '../src/search.ts'
 import type { MemoryFileRaw } from '../src/types.ts'
+
+const CLI = fileURLToPath(new URL('../cli/amk.mjs', import.meta.url))
 
 const config = defineMemoryConfig({
   categories: ['pricing', 'product', 'scope'],
@@ -67,5 +74,56 @@ describe('metric ranges', () => {
     assertInRange(summary)
     assert.equal(summary.hitRate, 0.5)
     assert.deepEqual(summary.failures.map((failure) => failure.reason), ['missing expected ids: pricing.missing'])
+  })
+})
+
+// Every aggregate is perfect, yet the edge drags in an atom the case forbids.
+const FORBIDDEN: EvalCase[] = [{
+  q: 'what does it cost',
+  expectScope: 'match',
+  expectIds: ['pricing.plans'],
+  expectCategories: ['pricing', 'product'],
+  mustNotRetrieve: ['product.limits'],
+}]
+
+describe('forbidden retrievals', () => {
+  it('a forbidden retrieval fails the run even when every aggregate is perfect', () => {
+    const summary = runEval(base, FORBIDDEN)
+    assert.deepEqual([summary.scopeAccuracy, summary.hitRate, summary.precision], [1, 1, 1])
+    assert.deepEqual(summary.confusionPairs, ['what does it cost → product.limits'])
+    const violations = checkThresholds(summary, { scopeAccuracy: 0, hitRate: 0, precision: 0 })
+    assert.deepEqual(violations, ['forbidden retrieval: what does it cost → product.limits'])
+  })
+
+  describe('amk eval', () => {
+    let root: string
+    beforeEach(() => {
+      root = mkdtempSync(join(tmpdir(), 'amk-eval-'))
+      for (const file of FILES) {
+        mkdirSync(join(root, 'memory', dirname(file.path)), { recursive: true })
+        writeFileSync(join(root, 'memory', file.path), file.content)
+      }
+      mkdirSync(join(root, 'memory', '_kit'), { recursive: true })
+      writeFileSync(join(root, 'memory', '_kit', 'eval-cases.json'), JSON.stringify(FORBIDDEN))
+      writeFileSync(join(root, 'memory.config.json'), JSON.stringify({
+        root: 'memory',
+        retrieval: { categories: ['pricing', 'product', 'scope'], intents: ['pricing', 'capability'] },
+      }))
+    })
+    afterEach(() => rmSync(root, { recursive: true, force: true }))
+
+    const run = (...args: string[]) => spawnSync(process.execPath, [CLI, 'eval', ...args], { cwd: root, encoding: 'utf8' })
+
+    it('exits non-zero on a forbidden retrieval with no baseline present', () => {
+      const result = run()
+      assert.equal(result.status, 1, result.stdout + result.stderr)
+      assert.match(result.stderr, /forbidden retrieval: what does it cost → product\.limits/)
+    })
+
+    it('a baseline that already contains the confusion cannot absorb it', () => {
+      run('--update-baseline')
+      const result = run()
+      assert.equal(result.status, 1, result.stdout + result.stderr)
+    })
   })
 })
