@@ -50,6 +50,8 @@ export interface BackendSearchResult {
   gap?: GapObservation
 }
 
+const round = (value: number): number => Math.round(value * 1000) / 1000
+
 /**
  * Search the backend and keep what clears the threshold. A miss becomes a
  * `scope` observation: the same kind and the same ledger as a miss in a local
@@ -73,14 +75,12 @@ export async function searchBackend(
     topic: query,
     detail: all.length === 0
       ? 'backend returned no candidates'
-      : `best score ${bestScore} < ${options.threshold} across ${all.length} candidate(s)`,
+      : `best score ${round(bestScore)} < ${options.threshold} across ${all.length} candidate(s)`,
     source: options.source ?? 'backend',
   }
   options.ledger?.observe(gap)
   return { candidates, scopeStatus: 'no_match', bestScore, gap }
 }
-
-const round = (value: number): number => Math.round(value * 1000) / 1000
 
 /**
  * `runEval` with the backend in place of `searchMemory`, by candidate id. Same
