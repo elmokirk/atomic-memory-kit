@@ -45,6 +45,8 @@ export const defaultThresholds: EvalThresholds = {
 
 export interface EvalSummary {
   total: number
+  /** Cases with expectScope 'match': the hitRate denominator. */
+  matchCases: number
   /** Share of cases where the scope gate (match/no_match) was right. */
   scopeAccuracy: number
   /** Share of match-cases where all expected ids were available. */
@@ -66,10 +68,13 @@ export function runEval(base: MemoryBase, cases: EvalCase[]): EvalSummary {
   let retrievedTotal = 0
 
   const alwaysIds = base.alwaysInclude.map((atom) => atom.id)
+  const categoryOf = new Map(base.atoms.map((atom) => [atom.id, atom.category]))
 
   for (const testCase of cases) {
     const result = searchMemory(base, testCase.q, { context: testCase.context })
-    const ids = result.chunks.map((chunk) => chunk.id)
+    // Deduplicated on both sides: a repeated id is one atom, and counting it
+    // twice is how a share drifts outside [0, 1].
+    const ids = [...new Set(result.chunks.map((chunk) => chunk.id))]
     // always-include atoms are injected by the consumer, not returned as
     // chunks — correctness checks consider both surfaces.
     const available = new Set([...ids, ...alwaysIds])
@@ -79,10 +84,14 @@ export function runEval(base: MemoryBase, cases: EvalCase[]): EvalSummary {
 
     if (result.scopeStatus !== 'match') continue
 
-    const expectIds = testCase.expectIds ?? []
+    const expectIds = [...new Set(testCase.expectIds ?? [])]
     const missingIds = expectIds.filter((id) => !available.has(id))
-    if (missingIds.length === 0 && ids.length > 0) hits++
-    else if (missingIds.length > 0) failures.push({ q: testCase.q, reason: `missing expected ids: ${missingIds.join(', ')}` })
+    // hitRate is a share of the cases *expected* to match. A negative case that
+    // matched by accident is a scope failure, not a hit — counting it here is
+    // what once pushed the rate above 1.
+    if (missingIds.length === 0 && ids.length > 0) {
+      if (testCase.expectScope === 'match') hits++
+    } else if (missingIds.length > 0) failures.push({ q: testCase.q, reason: `missing expected ids: ${missingIds.join(', ')}` })
 
     for (const id of testCase.mustNotRetrieve ?? []) {
       if (ids.includes(id)) confusionPairs.add(`${testCase.q} → ${id}`)
@@ -90,17 +99,21 @@ export function runEval(base: MemoryBase, cases: EvalCase[]): EvalSummary {
 
     const categories = new Set(testCase.expectCategories ?? [])
     retrievedTotal += ids.length
-    retrievedRelevant += base.atoms
-      .filter((atom) => ids.includes(atom.id))
-      .filter((atom) => expectIds.includes(atom.id) || categories.has(atom.category)).length
+    retrievedRelevant += ids
+      .filter((id) => expectIds.includes(id) || categories.has(categoryOf.get(id) ?? '')).length
   }
 
-  const matchTotal = Math.max(1, cases.filter((entry) => entry.expectScope === 'match').length)
+  const matchCases = cases.filter((entry) => entry.expectScope === 'match').length
+  // An empty denominator measured nothing, so its share is vacuously 1, the
+  // rule precision always used. That keeps every metric in [0, 1];
+  // checkThresholds is what refuses to let "vacuously perfect" pass.
+  const share = (part: number, whole: number): number => round(whole === 0 ? 1 : part / whole)
   return {
     total: cases.length,
-    scopeAccuracy: round(cases.length === 0 ? 1 : correctScope / cases.length),
-    hitRate: round(hits / matchTotal),
-    precision: round(retrievedTotal === 0 ? 1 : retrievedRelevant / retrievedTotal),
+    matchCases,
+    scopeAccuracy: share(correctScope, cases.length),
+    hitRate: share(hits, matchCases),
+    precision: share(retrievedRelevant, retrievedTotal),
     confusionPairs: [...confusionPairs],
     failures,
   }
@@ -124,11 +137,17 @@ export function evalToGaps(summary: EvalSummary, source = 'amk eval'): GapObserv
   ]
 }
 
+/** Absolute failures: each one fails a run on its own, with or without a baseline. */
 export function checkThresholds(summary: EvalSummary, thresholds: EvalThresholds = defaultThresholds): string[] {
+  if (summary.total === 0) return ['no eval cases: nothing was measured']
   const violations: string[] = []
+  if (summary.matchCases === 0) violations.push('no match cases: hitRate not measured')
   if (summary.scopeAccuracy < thresholds.scopeAccuracy) violations.push(`scopeAccuracy ${summary.scopeAccuracy} < ${thresholds.scopeAccuracy}`)
   if (summary.hitRate < thresholds.hitRate) violations.push(`hitRate ${summary.hitRate} < ${thresholds.hitRate}`)
   if (summary.precision < thresholds.precision) violations.push(`precision ${summary.precision} < ${thresholds.precision}`)
+  // A mustNotRetrieve hit is a per-case assertion, not a statistic: one leak
+  // fails the run whatever the averages say, and no baseline can absorb it.
+  for (const pair of summary.confusionPairs) violations.push(`forbidden retrieval: ${pair}`)
   return violations
 }
 
