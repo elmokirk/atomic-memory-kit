@@ -118,7 +118,7 @@ quoting.**
 
 *Retrieved 2026-10-05.* Basis of [`PRODUCT.md`](PRODUCT.md) §5 and the adapter phases in
 [`docs/strategy/ROADMAP.md`](docs/strategy/ROADMAP.md). Nothing here has been
-integration-tested yet.
+integration-tested yet, except Mem0 (subsection below).
 
 | Claim | Grade | Source | Used in |
 |---|---|---|---|
@@ -144,6 +144,29 @@ integration-tested yet.
 | Type stripping is on by default from v22.18.0 and v23.6.0 | docs | [Node.js TypeScript](https://nodejs.org/api/typescript.html), history table | ROADMAP Phase 1 (`engines` floor) |
 | OpenViking is a context database exposing `viking://` URIs, L0/L1/L2 tiers, an HTTP API on port 1933 and SDKs; core licensed AGPLv3 | docs | [OpenViking repository](https://github.com/volcengine/OpenViking) · [Sessions API](https://docs.openviking.ai/en/api/05-sessions) | ROADMAP, deferred |
 | OpenViking memories live under the user namespace (`viking://user/{id}/...`); older docs showed `viking://agent/memories`, the FAQ says that path is no longer writable | docs | [Context types](https://docs.openviking.ai/en/concepts/02-context-types) · [FAQ](https://docs.openviking.net/en/faq/faq) | ROADMAP, deferred (reason: API still moving) |
+
+### Mem0 adapter, pinned version (retrieved 2026-10-06)
+
+Read from, and run against, mem0 commit `94c3fe9` (`mem0ai` 2.2.1). Basis of
+[`docs/MEM0.md`](docs/MEM0.md), `adapters/mem0.ts` and the Mem0 section of
+[`LIMITATIONS.md`](LIMITATIONS.md). `M` below abbreviates
+`https://github.com/mem0ai/mem0/blob/94c3fe9f238f3dbf29c9ce98643bd71eb13077cd`.
+
+| Claim | Grade | Source | Used in |
+|---|---|---|---|
+| Commit `94c3fe9` (2026-09-25) is the Python SDK release 2.2.1 | docs | `M/pyproject.toml` (`version = "2.2.1"`), commit message | MEM0 entry check |
+| The official REST server bundles only `openai`, `anthropic`, `gemini` LLMs and `openai`, `gemini` embedders; another provider needs its package installed, the image rebuilt and `BUNDLED_*_PROVIDERS` edited in `server/main.py`; startup defaults to `openai` | docs | `M/server/main.py` (`BUNDLED_LLM_PROVIDERS`, the 400 message of `POST /configure`), `M/server/.env.example` | MEM0 entry check (why the wrapper) |
+| The server authenticates programmatic calls with `X-API-Key`; `AUTH_DISABLED=true` is for local development | docs | `M/server/README.md` | `adapters/mem0.ts` `apiKey`, MEM0 |
+| `POST /search` takes `{query, filters, top_k, threshold}`; top-level `user_id` is deprecated in favour of `filters`; `filters` must contain `user_id`, `agent_id` or `run_id` | docs | `M/server/main.py` `SearchRequest`, `M/mem0/memory/main.py` `Memory.search` docstring and check | `adapters/mem0.ts`, MEM0 |
+| Search returns `{"results": [{id, memory, score, metadata, ...}]}`; an empty search returns `{"results": []}` | docs, observation | `Memory.search` docstring; recorded run in MEM0 | `adapters/mem0.ts` |
+| `POST /memories` takes `{messages, user_id \| agent_id \| run_id, metadata, infer}`, returns `{"results": [{id, memory, event}]}`, and answers 400 without an identifier | docs, observation | `M/server/main.py` `MemoryCreate`, `add_memory`; recorded run | `adapters/mem0.ts` |
+| `infer` defaults to true: an LLM extracts facts and may add, update or delete related memories; `infer: false` stores the messages as given | docs | `Memory.add` docstring | `adapters/mem0.ts` default `infer: false`, LIMITATIONS |
+| `threshold` defaults to 0.1 and gates the semantic score before it is combined with BM25 and entity boosts; the combined score is divided by the number of active signals | docs | `M/mem0/utils/scoring.py` `score_and_rank` docstring | LIMITATIONS (threshold tuning) |
+| Without `fastembed` installed, the Qdrant store disables BM25 keyword search and search is semantic only | observation | Startup log of the recorded run; message in `M/mem0/vector_stores/qdrant.py` | MEM0, LIMITATIONS |
+| Mem0 does not record searches that returned nothing: `Memory.search` returns the list and stores nothing; the `mem0.search` telemetry event carries limit, threshold and filter keys, not the result count; the server's `request_logs` holds method, path, status, latency and auth type | observation | Source read of `Memory.search`, `M/server/models.py` `RequestLog` | MEM0 entry check, PRODUCT §6 |
+| Library telemetry is on unless `MEM0_TELEMETRY` is false | docs | `M/mem0/memory/telemetry.py`, `M/server/.env.example` | MEM0 (`serve.py` turns it off) |
+| A question outside every stored memory still returned all three memories, the best at 0.443 (`nomic-embed-text:v1.5`, no BM25), rather than an empty list | observation | Recorded run in MEM0, 2026-10-06 | MEM0, LIMITATIONS |
+| With `infer` on and `qwen3.5:4b`, "Our support desk is open Monday to Friday, 9:00 to 17:00 Berlin time." was stored as "User's support desk operates Monday to Friday from 9:00 to 17:00 Berlin time" after 65 s | observation | Entry-check probe, 2026-10-06, one machine | LIMITATIONS |
 
 ## 8. Claude Code plugin system
 

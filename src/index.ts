@@ -128,3 +128,6 @@ export type {
   ProposalPlan,
   ProposalVerdict,
 } from './restructure.ts'
+
+export { runBackendEval, searchBackend, writeValidated } from './backend.ts'
+export type { BackendCandidate, BackendSearchOptions, BackendSearchResult, MemoryBackend, WriteOutcome } from './backend.ts'

@@ -13,7 +13,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./adapters/fs": "./adapters/fs.ts",
-    "./adapters/memory-tool": "./adapters/memory-tool.ts"
+    "./adapters/memory-tool": "./adapters/memory-tool.ts",
+    "./adapters/mem0": "./adapters/mem0.ts"
   },
   "files": [
     "src",

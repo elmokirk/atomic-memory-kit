@@ -397,6 +397,50 @@ No locking anywhere.
 
 ---
 
+## Mem0 adapter
+
+**The threshold is yours to tune, and only holds for one setup.** Mem0's score
+means something different per embedder, and changes again when fastembed is
+installed and BM25 joins the score. In the recorded run a question nothing
+covered scored 0.443 and a covered one 0.773; another embedder moves both.
+There is no default threshold, and a threshold copied from someone else's
+setup records the wrong gaps or none.
+
+**Mem0 rarely returns nothing.** Its own floor is 0.1, so an unrelated question
+usually comes back with weak hits. Gap recording depends entirely on AMK's
+threshold; with it set too low, nothing is ever a miss.
+
+**A miss is a score, not an understanding.** A question with a fact stored
+under different vocabulary can score low and be recorded as a gap; an
+unrelated fact that happens to sit close in embedding space can clear the
+threshold and hide one.
+
+**No sync.** AMK reads Mem0 per call and writes only through `writeValidated`.
+Memories added, updated or deleted in Mem0 directly are never validated, and
+nothing reconciles them with a local AMK memory.
+
+**Only writes through `writeValidated` are checked.** Mem0's own `add` with
+`infer: true` lets its LLM rewrite, merge and delete memories after validation
+would have run. The adapter therefore sends `infer: false`; switching it on
+means what Mem0 stores is no longer what passed the contract.
+
+**Local small models extract differently from Mem0's defaults.** Mem0 tunes its
+prompts for hosted models. With `qwen3.5:4b` one probe turned "Our support desk"
+into "User's support desk" and took 65 seconds. Expect different wording,
+different splits and slower adds than Mem0's documentation shows.
+
+**Eval ids are stable only for AMK-written memories.** A candidate's id is
+`metadata.amk_id` when present, otherwise Mem0's uuid, which a reset or a
+re-add changes. Eval cases naming uuids break on the next import.
+
+**One version, one setup tested.** The recorded run is `mem0ai` 2.2.1 through
+a stdlib wrapper with Ollama and a local Qdrant, because the official server
+does not accept Ollama without code changes. The official server uses the same
+request shapes but was not run. Update, delete, history and graph memory are
+not wrapped.
+
+---
+
 ## Explicitly out of scope
 
 These are not gaps in the implementation. They are things this project has

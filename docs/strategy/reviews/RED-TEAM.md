@@ -35,6 +35,7 @@ The preceding review used source inspection and reported 19 synthetic probes aga
 | Tool catalog and integration README diverge | S04 | Documentation can describe unavailable operations | B0-T06 |
 | Scope miss described as proven absence; recurrence as people count | S05 | Product claims exceed evidence | B0-T06, B1-T03 |
 | `src/memory-tool.ts` path resolution never reviewed | S06 | Added after baseline `af24e19`; same confinement questions as R13/R14 | B0-T05; fixed `ff85d15` (PoC I1) |
+| `src/compile.ts` (`generatedAt`, bundle header) and `src/gaps.ts` (observation `at` default, `prune` default, report header) call `new Date()`; CLAUDE.md rule 2 forbids clock access in `src/`, and `src/expiry.ts` claims none exists | S08 | Found during MVP integration, 2026-10-07. Callers can pass `at`/`now` for gaps; `compile` output is not reproducible byte for byte | open, not in MVP scope: inject a clock from adapters |
 | `drift` exits 0 on an error finding; `eval` modifies tracked `example/.memory-out/gaps.jsonl` | S07 | Found walking the quickstart, 2026-10-05 | B0-T08; drift fixed `a737b1b` (PoC I4); the eval part did not reproduce: `.memory-out/` is ignored and was never tracked (test in `5c29ab9`) |
 
 ## Source locations

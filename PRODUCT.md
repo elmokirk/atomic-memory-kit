@@ -41,7 +41,7 @@ Status is honest: *built* means it exists with tests; *fix* means it exists but 
 | MCP over HTTP | fix (binds all interfaces, writes without token, R16) |
 | Durability and provenance fields, expiry (contract 1.1.0) | built |
 | Memory-tool backend for the Claude API | built (path handling unreviewed, S06) |
-| Backend adapter interface plus a Mem0 adapter | planned |
+| Backend adapter interface plus a Mem0 adapter | built (tested against mem0ai 2.2.1, [docs/MEM0.md](docs/MEM0.md)) |
 | Honcho and Claude Code memory adapters | planned, demand-led |
 
 ## 4. Where it is used

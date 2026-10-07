@@ -6,7 +6,7 @@ Outcome: the PoC core reaches users through a Mem0 adapter and a Claude Code plu
 
 | Increment | Status | Branch | Evidence |
 |---|---|---|---|
-| I6 Mem0 integration | planned | `mvp/i6-mem0` | – |
+| I6 Mem0 integration | done | `mvp/i6-mem0` | Entry check `c9142ad`: mem0ai 2.2.1 (commit `94c3fe9`) does not record empty searches; official server cannot use Ollama without code changes, so the library ran behind a stdlib wrapper. Code `3ab4243`, `41dd2c9`, `b6ee673`; guide `90626f8`; recorded real run with `qwen3.5:4b` + `nomic-embed-text:v1.5`: hit 0.773, miss recorded as gap, volatile write refused, eval passes at 0.6 and fails at 0.4. Guide re-run from a fresh directory matched |
 | I7 Claude Code integration | awaiting_user | `mvp/i7-plugin` | `a2c44f0` manifests, `92a95e4` server + tests, `d1f987d` docs; validate passes (3 warnings); isolated install on Claude Code 2.1.289 connected, read-only enforced; GitHub-shorthand install and interactive `/plugin` screens open |
 | I8 Release | planned | `mvp/i8-release` | – |
 
@@ -16,14 +16,14 @@ The Definition of Done for every increment in [POC.md](POC.md) applies here too.
 
 Entry check, recorded before building: on the pinned Mem0 open-source version, confirm the search and add endpoints, and confirm Mem0 does not already record searches that returned nothing. If it does, stop and report.
 
-- [ ] `src/backend.ts` defines one small, pure interface: a host-supplied search returning candidates with id, text and score, and an optional write. No I/O, no Mem0 types.
-- [ ] Wrapping a backend search records a scope gap when no candidate clears the threshold, reusing the existing ledger.
-- [ ] The eval runner executes must-retrieve and must-not-retrieve cases against a backend by candidate id.
-- [ ] Write validation is opt-in: a candidate fact passes the AMK contract (including durability) before the host's write is called; a rejection returns the diagnostic and calls nothing.
-- [ ] `adapters/mem0.ts` talks to Mem0 over HTTP with `fetch`; no Mem0 SDK dependency.
-- [ ] Tests run against a fake backend in-process; one recorded run against a real, pinned Mem0 instance (version, command, result) is in the evidence column.
-- [ ] `docs/MEM0.md` is runnable as written: start Mem0, point the adapter at it, see a gap and an eval result.
-- [ ] `LINKMAP.md` rows for every Mem0 fact the guide relies on.
+- [x] `src/backend.ts` defines one small, pure interface: a host-supplied search returning candidates with id, text and score, and an optional write. No I/O, no Mem0 types.
+- [x] Wrapping a backend search records a scope gap when no candidate clears the threshold, reusing the existing ledger.
+- [x] The eval runner executes must-retrieve and must-not-retrieve cases against a backend by candidate id.
+- [x] Write validation is opt-in: a candidate fact passes the AMK contract (including durability) before the host's write is called; a rejection returns the diagnostic and calls nothing.
+- [x] `adapters/mem0.ts` talks to Mem0 over HTTP with `fetch`; no Mem0 SDK dependency.
+- [x] Tests run against a fake backend in-process; one recorded run against a real, pinned Mem0 instance (version, command, result) is in the evidence column.
+- [x] `docs/MEM0.md` is runnable as written: start Mem0, point the adapter at it, see a gap and an eval result.
+- [x] `LINKMAP.md` rows for every Mem0 fact the guide relies on.
 
 ## I7 Claude Code integration
 
