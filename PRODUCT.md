@@ -31,16 +31,18 @@ Status is honest: *built* means it exists with tests; *fix* means it exists but 
 |---|---|
 | Atom contract with validator (core, standard, extension fields; errors vs warnings) | built |
 | Deterministic retrieval with scope gate, synonyms, German/English folding | built |
-| Context budget for the prompt | fix (first result can exceed it, R07) |
+| Context budget for the prompt | built (an oversized best atom is returned whole and flagged `overBudget`) |
 | Gap ledger with six detectors (runtime, scope, eval, drift, todo, cycle/orphan) | built |
-| Streaming gap marker for chatbot output (`[GAP: topic]`) | fix (markers lost or split across chunks, R01-R03) |
-| Eval with baseline regression | fix (hit rate can exceed 1, forbidden hits do not fail, R10-R11) |
-| Drift check against an external claims map | built (exit code wrong, S07) |
+| Streaming gap marker for chatbot output (`[GAP: topic]`) | built (lossless decoder, `write`/`end`) |
+| Eval with baseline regression | built (forbidden retrievals fail the run on their own) |
+| Drift check against an external claims map | built |
 | Bidirectional bundle: compile, edit, import, validate | built |
 | CLI and MCP server (stdio) | built |
-| MCP over HTTP | fix (binds all interfaces, writes without token, R16) |
+| Runnable chatbot demo with a scripted model | built (`npm run demo`) |
+| Claude Code plugin around the MCP server, read-only by default, gaps still recorded | built (installed in an isolated profile; GitHub install pending owner acceptance) |
+| MCP over HTTP | built (loopback by default, writes need a token) |
 | Durability and provenance fields, expiry (contract 1.1.0) | built |
-| Memory-tool backend for the Claude API | built (path handling unreviewed, S06) |
+| Memory-tool backend for the Claude API | built (path confinement fixed, S06) |
 | Backend adapter interface plus a Mem0 adapter | built (tested against mem0ai 2.2.1, [docs/MEM0.md](docs/MEM0.md)) |
 | Honcho and Claude Code memory adapters | planned, demand-led |
 

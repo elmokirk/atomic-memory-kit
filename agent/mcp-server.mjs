@@ -82,7 +82,7 @@ const { searchMemory } = await import('../src/search.ts')
 
 const PROTOCOL_VERSION = '2026-07-28'
 const SUPPORTED_VERSIONS = [PROTOCOL_VERSION, '2025-11-25', '2025-06-18']
-const SERVER_INFO = { name: 'atomic-memory-kit', version: '0.2.0' }
+const SERVER_INFO = { name: 'atomic-memory-kit', version: '0.3.0' }
 
 const META = {
   protocolVersion: 'io.modelcontextprotocol/protocolVersion',

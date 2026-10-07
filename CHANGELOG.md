@@ -23,6 +23,12 @@ Subsections to use: `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `Secur
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-07
+
+PoC and MVP of the chatbot-first scope in `PRODUCT.md`: security and
+correctness fixes from the red-team register, a runnable chatbot demo, a Mem0
+adapter and a Claude Code plugin. Contract stays at 1.1.0.
+
 ### Security
 
 - `--http` binds `127.0.0.1` by default; `--host` binds elsewhere. The startup
@@ -307,6 +313,7 @@ knowledge extraction, no keyword generation. See `LIMITATIONS.md`.
 
 ---
 
-[Unreleased]: https://github.com/elmokirk/atomic-memory-kit/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/elmokirk/atomic-memory-kit/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/elmokirk/atomic-memory-kit/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/elmokirk/atomic-memory-kit/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/elmokirk/atomic-memory-kit/releases/tag/v0.1.0

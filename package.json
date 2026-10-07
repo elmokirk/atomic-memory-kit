@@ -1,6 +1,6 @@
 {
   "name": "atomic-memory-kit",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Bidirectional atomic memory for agents: compile a Markdown knowledge graph into one context bundle, decompile it back into atoms, and spotlight what is missing.",
   "type": "module",
   "license": "MIT",

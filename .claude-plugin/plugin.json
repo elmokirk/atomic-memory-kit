@@ -1,5 +1,6 @@
 {
   "name": "amk",
+  "version": "0.3.0",
   "displayName": "Atomic Memory Kit",
   "description": "A curated knowledge base of Markdown atoms with gap tracking: answers cite atom ids, and questions the knowledge base cannot answer become recorded gaps. Complements Claude Code memory (CLAUDE.md, auto memory); does not replace it. Read-only unless you enable writes. Needs Node >= 22.18.",
   "author": {
